@@ -1,0 +1,16 @@
+[package]
+name = "border-wars"
+version = "0.1.0"
+edition = "2021"
+description = "An online turn based game."
+repository = "https://git.tipragot.fr/corentin/border-wars.git"
+authors = ["corentin"]
+
+[lints.rust]
+missing_docs = "warn"
+
+[lints.clippy]
+missing_docs_in_private_items = "warn"
+unwrap_in_result = "warn"
+unwrap_used = "warn"
+nursery = "warn"

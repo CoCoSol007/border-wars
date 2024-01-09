@@ -1,0 +1,19 @@
+on: [push, pull_request]
+name: Rust Checks
+
+jobs:
+  checks:
+    runs-on: main
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Use cache
+        run: mkdir -p /cache/${{ gitea.repository }} && ln -s /cache/${{ gitea.repository }} target
+      - name: Cargo fmt
+        run: cargo fmt --check
+      - name: Cargo build
+        run: cargo build
+      - name: Cargo test
+        run: cargo test
+      - name: Cargo clippy
+        run: cargo clippy -- -D warnings
