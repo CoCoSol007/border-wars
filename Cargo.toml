@@ -9,6 +9,10 @@ authors = ["corentin"]
 [lints.rust]
 missing_docs = "warn"
 
+[lints.rustdoc]
+missing_doc_code_examples = "warn"
+private_doc_tests = "warn"
+
 [lints.clippy]
 missing_docs_in_private_items = "warn"
 unwrap_in_result = "warn"
