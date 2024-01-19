@@ -81,7 +81,7 @@ our team consists of :
 - [CoCo_Sol](https://github.com/cocosol007): Owner of this project and the main developper
 - [Raphaël](https://git.tipragot.fr/raphael): Owner of this project and game designer
 - [Tipragot](https://git.tipragot.fr/tipragot): Main reviewer
-- [Arthur](https://www.rust-lang.org/): Compositeur
+- [Arthur](https://www.instagram.com/tuturdu32): Compositeur
 - [Racloody](https://linktr.ee/racloody): Sound designer
 - [Horoleysh](https://instagram.com/horoleysh): Artist
 
