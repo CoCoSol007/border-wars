@@ -8,7 +8,7 @@ If you want to know more about our reflexions check this : [all brainstorms](doc
 
 ## The game
 
-we've decided to make an turn based online game named : **Border Wars**
+We've decided to make an turn based online game named : **Border Wars**
 
 Code in rust using Bevy 
 
@@ -77,7 +77,7 @@ In the future, we'll have to make sure that each troop is both different and bal
 
 ## Our team 
 
-our team consists of : 
+Our team consists of : 
 - [CoCo_Sol](https://github.com/cocosol007): Owner of this project and the main developper
 - [Raphaël](https://git.tipragot.fr/raphael): Owner of this project and game designer
 - [Tipragot](https://git.tipragot.fr/tipragot): Main reviewer
