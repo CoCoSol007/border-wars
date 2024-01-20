@@ -82,7 +82,7 @@ our team consists of :
 - [Raphaël](https://git.tipragot.fr/raphael): Owner of this project and game designer
 - [Tipragot](https://git.tipragot.fr/tipragot): Main reviewer
 - [Arthur](https://www.instagram.com/tuturdu32): Compositeur
-- [Racloody](https://linktr.ee/racloody): Sound designer
+- [Racloody](https://linktr.ee/racloody): Sound designer and chief communications officer
 - [Horoleysh](https://instagram.com/horoleysh): Artist
 
 
