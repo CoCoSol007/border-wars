@@ -1,79 +1,41 @@
 # Border Wars
+Border Wars is a turn-based online strategy game where players compete to conquer territories and expand their medieval kingdom. The game incorporates various elements outlined in all brainstorm:
 
-## Brainstorm 
+## Brainstorms
 
 If you want to know more about our reflexions check this : [all brainstorms](docs/brainstorms/).
 
 
+## 1. Soldier System
 
-## The game
+- **Move Management**: Players can strategically move their troops across the hexagonal grid.
+- **Fighting**: Engage in battles by selecting our army to attack.
 
-We've decided to make an turn based online game named : **Border Wars**
+## 2. Building
 
-Code in rust using Bevy 
+- **Upgradeable Buildings**: Structures such as the Castle, Barracks, Outpost, Mines, Sawmills, Breeding Farms, and Towers can be upgraded to enhance their capabilities. If you want to see each upgrade of each buildings, check the [second brainstrom](docs/brainstorms/brainstorm2.md#building)
+- **Destruction and Construction**: Players can gain resources and build their own structures within their territory with a limited number of workers.
+- **Usage of Buildings**: Each building serves a specific purpose, from troop recruitment to resource generation. Players must manage their buildings efficiently to strengthen their kingdom. If you want to see each usage of each buildings, check the [second brainstrom](docs/brainstorms/brainstorm2.md#building)
 
-## Building list
+## 3. Villager Management
 
-```mermaid
-mindmap
-  root((Buildings))
-    ("Castle</br>
-    The main building of your army, you must protect it")
-    ("Casern</br>
-      Train troop")
-    ("Tower</br>
-      Defend your territory")
-    ("Wall</br>
-    A pasive defence that block every soldier")
-    ("Outpost</br>
-    A *teleporter* like")
-    [Farms]
-      ("Mine</br>
-      Allow you to gain stone each turns")
-      ("Sawmill</br>
-      Allow you to gain wood each turns")
-      ("Breeding</br>
-      Allow you to gain food each turn")
-```
+- **Castle Management**: Players can assign villagers to different professions within the Castle, such as Explorers, Worker or Neutral
 
-## Game Modes
+## 4. Conquest
 
-```mermaid
-mindmap
-  root((Game Modes))
-    ("1v1</br>
-    The classic mode")
-    ("2v2</br>
-    A funny mode 2v2")
-    ("History mode</br>
-    A mode to understand why")
-    ("1vIA ?</br>
-    A when you don't have friends")
-```
+- **Territory Control**: Players aim to conquer and control hexagonal territories on the map.
+- **Explorers**: Special units can be deployed to explore unclaimed territories and expand the kingdom's borders.
+- **Membership Change**: Players can switch the ownership of territories through conquest or diplomacy.
 
+## 5. Main Menu System
 
-## Style 
+- **Settings**: Players can adjust game settings and preferences.
+- **Game Modes**: Choose from various modes including 1v1, 2v2, 1vAI, and History Mode.
 
-We think to made our game in 2D iso with hexagons.
-the overall theme will be fairytale medieval.
+## Additional Features
 
-## Different troop 
-
-
-```mermaid
-mindmap
-  root((Troop))
-    ("No Name</br>
-    A classic troop")
-    ("No Name</br>
-    A troop with a great deal of experience but not much power")
-    ("No Name</br>
-    A troop with great power but little scope for expansion")
-```
-
-## Balancing
-
-In the future, we'll have to make sure that each troop is both different and balanced. 
+- **Balancing**: Ongoing efforts to ensure each troop type and building is balanced for fair gameplay.
+- **Visual and Audio**: Immersive 2D isometric graphics with a fairytale medieval theme and accompanying sound effects and music.
 
 ## Our team 
 
