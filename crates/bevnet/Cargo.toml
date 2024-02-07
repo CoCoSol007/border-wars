@@ -1,0 +1,12 @@
+[package]
+name = "bevnet"
+version = "0.2.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+description = "A library for networking in Bevy."
+authors = ["Tipragot <contact@tipragot.fr>"]
+keywords = ["bevy", "network", "game"]
+categories = ["network-programming", "game-development"]
+
+[lints]
+workspace = true
