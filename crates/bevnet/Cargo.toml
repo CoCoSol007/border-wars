@@ -10,3 +10,6 @@ categories = ["network-programming", "game-development"]
 
 [lints]
 workspace = true
+
+[dependencies]
+aes-gcm = "0.10.3"

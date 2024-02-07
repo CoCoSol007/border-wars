@@ -4,6 +4,9 @@ use std::collections::LinkedList;
 use std::io::{self, Read, Write};
 use std::net::{TcpListener, TcpStream, ToSocketAddrs};
 
+use aes_gcm::aead::{Aead, AeadCore, KeyInit, OsRng};
+use aes_gcm::{Aes128Gcm, Key, Nonce};
+
 /// A non-blocking tcp connection.
 ///
 /// # Example
@@ -14,8 +17,9 @@ use std::net::{TcpListener, TcpStream, ToSocketAddrs};
 /// use bevnet::{Connection, Listener};
 ///
 /// # fn main() -> io::Result<()> {
-/// let listener = Listener::bind("127.0.0.1:23732")?;
-/// let mut connection = Connection::connect("127.0.0.1:23732")?;
+/// let secret_key = Connection::generate_key();
+/// let listener = Listener::bind("127.0.0.1:23732", &secret_key)?;
+/// let mut connection = Connection::connect("127.0.0.1:23732", &secret_key)?;
 ///
 /// // The accept operation is not blocking. So we need to loop here.
 /// let mut server_connection;
@@ -56,6 +60,9 @@ pub struct Connection {
     /// `None` if the message length is not yet received.
     receive_message_len: Option<u16>,
 
+    /// The nonce used for encryption.
+    receive_message_nonce: Option<Vec<u8>>,
+
     /// The length of the received byte block.
     ///
     /// Used by [Connection::receive_partial] to determine if the block is
@@ -64,26 +71,36 @@ pub struct Connection {
 
     /// The buffer used to receive a byte block.
     receive_buffer: Vec<u8>,
+
+    /// The secret key used for encryption.
+    secret_key: Aes128Gcm,
 }
 
 impl Connection {
+    /// Generates a new secret key.
+    pub fn generate_key() -> [u8; 16] {
+        Aes128Gcm::generate_key(OsRng).into()
+    }
+
     /// Creates a new [Connection] from a [TcpStream].
-    fn new(stream: TcpStream) -> io::Result<Self> {
+    fn new(stream: TcpStream, secret_key: &Key<Aes128Gcm>) -> io::Result<Self> {
         stream.set_nonblocking(true)?;
         Ok(Self {
             stream,
             send_buffers: LinkedList::new(),
             receive_message_len: None,
+            receive_message_nonce: None,
             receive_filled_len: 0,
             receive_buffer: Vec::new(),
+            secret_key: Aes128Gcm::new(secret_key),
         })
     }
 
     /// Creates a new [Connection] that connects to the given address.
     ///
     /// This function is blocking.
-    pub fn connect(address: impl ToSocketAddrs) -> io::Result<Self> {
-        Self::new(TcpStream::connect(address)?)
+    pub fn connect(address: impl ToSocketAddrs, secret_key: &[u8; 16]) -> io::Result<Self> {
+        Self::new(TcpStream::connect(address)?, secret_key.into())
     }
 
     /// Sends a message over the connection.
@@ -93,6 +110,15 @@ impl Connection {
     ///
     /// This function is not blocking.
     pub fn send(&mut self, message: &[u8]) -> io::Result<bool> {
+        // Encrypt the message.
+        let nonce = Aes128Gcm::generate_nonce(OsRng);
+        let message = self.secret_key.encrypt(&nonce, message).map_err(|e| {
+            io::Error::new(
+                io::ErrorKind::InvalidData,
+                format!("failed to encrypt message: {}", e),
+            )
+        })?;
+
         // Get the length of the message as a u16.
         let message_len: u16 = match message.len().try_into() {
             Ok(len) => len,
@@ -105,10 +131,10 @@ impl Connection {
         };
 
         // Add a new buffer to the send queue.
-        let mut buffer = Vec::with_capacity(message_len as usize + 2);
-        buffer.extend(message_len.to_ne_bytes());
-        buffer.extend(message);
-        self.send_buffers.push_back((0, buffer));
+        self.send_buffers
+            .push_back((0, message_len.to_ne_bytes().to_vec()));
+        self.send_buffers.push_back((0, nonce.to_vec()));
+        self.send_buffers.push_back((0, message));
 
         // Update the connection.
         self.update()
@@ -190,7 +216,7 @@ impl Connection {
     /// If no message is available, returns `None`.
     ///
     /// This function is not blocking.
-    pub fn receive(&mut self) -> io::Result<Option<&[u8]>> {
+    pub fn receive(&mut self) -> io::Result<Option<Vec<u8>>> {
         // Receiving the message length.
         let message_len = match self.receive_message_len {
             Some(message_len) => message_len,
@@ -212,13 +238,45 @@ impl Connection {
             }
         };
 
+        if self.receive_message_nonce.is_none() {
+            // If the nonce is not received yet, return `None`.
+            if !self.receive_partial(12)? {
+                return Ok(None);
+            }
+
+            // Setting the nonce.
+            self.receive_message_nonce = Some(self.receive_buffer[..12].to_vec());
+        }
+
         // Receiving the message.
         if !self.receive_partial(message_len)? {
             return Ok(None);
         }
+        let message = &self.receive_buffer[..message_len as usize];
+
+        // Getting the nonce.
+        let nonce = self
+            .receive_message_nonce
+            .as_ref()
+            .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidData, "missing nonce"))?;
+
+        // Decrypting the message.
+        let message = self
+            .secret_key
+            .decrypt(Nonce::from_slice(nonce), message)
+            .map_err(|e| {
+                io::Error::new(
+                    io::ErrorKind::InvalidData,
+                    format!("failed to decrypt message: {}", e),
+                )
+            })?;
+
+        // Resetting the message length and nonce.
+        self.receive_message_len = None;
+        self.receive_message_nonce = None;
 
         // Returning the message.
-        Ok(Some(&self.receive_buffer[..message_len as usize]))
+        Ok(Some(message))
     }
 }
 
@@ -230,8 +288,9 @@ impl Connection {
 /// use bevnet::{Connection, Listener};
 ///
 /// # fn main() -> io::Result<()> {
-/// let listener = Listener::bind("127.0.0.1:23732")?;
-/// let mut connection = Connection::connect("127.0.0.1:23732")?;
+/// let secret_key = Connection::generate_key();
+/// let listener = Listener::bind("127.0.0.1:23732", &secret_key)?;
+/// let mut connection = Connection::connect("127.0.0.1:23732", &secret_key)?;
 ///
 /// // The accept operation is not blocking. So we need to loop here.
 /// let mut server_connection;
@@ -244,14 +303,17 @@ impl Connection {
 /// # Ok(())
 /// # }
 /// ```
-pub struct Listener(TcpListener);
+pub struct Listener(TcpListener, Key<Aes128Gcm>);
 
 impl Listener {
     /// Creates a new listener.
-    pub fn bind(addr: impl ToSocketAddrs) -> io::Result<Listener> {
+    pub fn bind(addr: impl ToSocketAddrs, secret_key: &[u8; 16]) -> io::Result<Self> {
         let listener = TcpListener::bind(addr)?;
         listener.set_nonblocking(true)?;
-        Ok(Listener(listener))
+        Ok(Self(
+            listener,
+            Key::<Aes128Gcm>::from_slice(secret_key).to_owned(),
+        ))
     }
 
     /// Accepts a new [Connection].
@@ -259,7 +321,7 @@ impl Listener {
     /// This function is not blocking.
     pub fn accept(&self) -> io::Result<Option<Connection>> {
         match self.0.accept() {
-            Ok((stream, _)) => Connection::new(stream).map(Some),
+            Ok((stream, _)) => Connection::new(stream, &self.1).map(Some),
             Err(ref e) if e.kind() == io::ErrorKind::WouldBlock => Ok(None),
             Err(ref e) if e.kind() == io::ErrorKind::Interrupted => Ok(None),
             Err(e) => Err(e),
