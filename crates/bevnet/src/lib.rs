@@ -2,24 +2,26 @@
 
 use std::collections::LinkedList;
 use std::io::{self, Read, Write};
-use std::net::{TcpListener, TcpStream, ToSocketAddrs};
+use std::net::{IpAddr, Ipv4Addr, SocketAddrV4, TcpListener, TcpStream};
 
 use aes_gcm::aead::{Aead, AeadCore, KeyInit, OsRng};
 use aes_gcm::{Aes128Gcm, Key, Nonce};
+use base64::prelude::*;
+use igd::{Gateway, PortMappingProtocol};
+use local_ip_address::local_ip;
 
 /// A non-blocking tcp connection.
 ///
 /// # Example
 ///
-/// ```rust
+/// ```no_run
 /// use std::io;
 ///
 /// use bevnet::{Connection, Listener};
 ///
 /// # fn main() -> io::Result<()> {
-/// let secret_key = Connection::generate_key();
-/// let listener = Listener::bind("127.0.0.1:23732", &secret_key)?;
-/// let mut connection = Connection::connect("127.0.0.1:23732", &secret_key)?;
+/// let listener = Listener::new()?;
+/// let mut connection = Connection::connect(&listener.connection_string())?;
 ///
 /// // The accept operation is not blocking. So we need to loop here.
 /// let mut server_connection;
@@ -77,11 +79,6 @@ pub struct Connection {
 }
 
 impl Connection {
-    /// Generates a new secret key.
-    pub fn generate_key() -> [u8; 16] {
-        Aes128Gcm::generate_key(OsRng).into()
-    }
-
     /// Creates a new [Connection] from a [TcpStream].
     fn new(stream: TcpStream, secret_key: &Key<Aes128Gcm>) -> io::Result<Self> {
         stream.set_nonblocking(true)?;
@@ -96,11 +93,32 @@ impl Connection {
         })
     }
 
-    /// Creates a new [Connection] that connects to the given address.
+    /// Creates a new [Connection] that connects to the given connection string.
     ///
     /// This function is blocking.
-    pub fn connect(address: impl ToSocketAddrs, secret_key: &[u8; 16]) -> io::Result<Self> {
-        Self::new(TcpStream::connect(address)?, secret_key.into())
+    pub fn connect(connection_string: &str) -> io::Result<Self> {
+        let data = BASE64_URL_SAFE_NO_PAD
+            .decode(connection_string)
+            .map_err(io::Error::other)?;
+        if data.len() != 22 {
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidInput,
+                format!("invalid connection string: {}", connection_string),
+            ));
+        }
+        let address = SocketAddrV4::new(
+            Ipv4Addr::new(data[0], data[1], data[2], data[3]),
+            u16::from_ne_bytes(data[4..=5].try_into().map_err(|_| {
+                io::Error::new(
+                    io::ErrorKind::InvalidInput,
+                    format!("invalid connection string: {}", connection_string),
+                )
+            })?),
+        );
+        Self::new(
+            TcpStream::connect(address)?,
+            Key::<Aes128Gcm>::from_slice(&data[6..]),
+        )
     }
 
     /// Sends a message over the connection.
@@ -288,15 +306,14 @@ impl Connection {
 
 /// A non-blocking tcp listener.
 ///
-/// ```rust
+/// ```no_run
 /// use std::io;
 ///
 /// use bevnet::{Connection, Listener};
 ///
 /// # fn main() -> io::Result<()> {
-/// let secret_key = Connection::generate_key();
-/// let listener = Listener::bind("127.0.0.1:23732", &secret_key)?;
-/// let mut connection = Connection::connect("127.0.0.1:23732", &secret_key)?;
+/// let listener = Listener::new()?;
+/// let mut connection = Connection::connect(&listener.connection_string())?;
 ///
 /// // The accept operation is not blocking. So we need to loop here.
 /// let mut server_connection;
@@ -309,16 +326,32 @@ impl Connection {
 /// # Ok(())
 /// # }
 /// ```
-pub struct Listener(TcpListener, Key<Aes128Gcm>);
+pub struct Listener(TcpListener, Gateway, SocketAddrV4, Key<Aes128Gcm>);
 
 impl Listener {
     /// Creates a new listener.
-    pub fn bind(addr: impl ToSocketAddrs, secret_key: &[u8; 16]) -> io::Result<Self> {
-        let listener = TcpListener::bind(addr)?;
+    pub fn new() -> io::Result<Self> {
+        let local_address = match local_ip().map_err(io::Error::other)? {
+            IpAddr::V4(address) => address,
+            IpAddr::V6(_) => unreachable!(),
+        };
+        let listener = TcpListener::bind(SocketAddrV4::new(local_address, 0))?;
+        let gateway = igd::search_gateway(Default::default()).map_err(io::Error::other)?;
+        let opened_port = gateway
+            .add_any_port(
+                PortMappingProtocol::TCP,
+                SocketAddrV4::new(local_address, listener.local_addr()?.port()),
+                3600 * 24,
+                "bevnet",
+            )
+            .map_err(io::Error::other)?;
+        let external_address = gateway.get_external_ip().map_err(io::Error::other)?;
         listener.set_nonblocking(true)?;
         Ok(Self(
             listener,
-            Key::<Aes128Gcm>::from_slice(secret_key).to_owned(),
+            gateway,
+            SocketAddrV4::new(external_address, opened_port),
+            Aes128Gcm::generate_key(OsRng),
         ))
     }
 
@@ -327,10 +360,28 @@ impl Listener {
     /// This function is not blocking.
     pub fn accept(&self) -> io::Result<Option<Connection>> {
         match self.0.accept() {
-            Ok((stream, _)) => Connection::new(stream, &self.1).map(Some),
+            Ok((stream, _)) => Connection::new(stream, &self.3).map(Some),
             Err(ref e) if e.kind() == io::ErrorKind::WouldBlock => Ok(None),
             Err(ref e) if e.kind() == io::ErrorKind::Interrupted => Ok(None),
             Err(e) => Err(e),
         }
+    }
+
+    /// Returns the connection string that can be used to connect to th
+    /// listener.
+    pub fn connection_string(&self) -> String {
+        let mut data = Vec::with_capacity(22);
+        data.extend(self.2.ip().octets());
+        data.extend(self.2.port().to_ne_bytes());
+        data.extend(self.3);
+        BASE64_URL_SAFE_NO_PAD.encode(&data)
+    }
+}
+
+impl Drop for Listener {
+    fn drop(&mut self) {
+        self.1
+            .remove_port(PortMappingProtocol::TCP, self.2.port())
+            .ok();
     }
 }
