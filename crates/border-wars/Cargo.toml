@@ -1,0 +1,10 @@
+[package]
+name = "border-wars"
+version = "0.1.0"
+edition = "2021"
+description = "An online turn based game."
+repository = "https://git.tipragot.fr/corentin/border-wars.git"
+authors = ["CoCoSol"]
+
+[lints]
+workspace = true
