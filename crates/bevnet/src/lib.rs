@@ -197,6 +197,12 @@ impl Connection {
         let receive_buffer = &mut self.receive_buffer[start_index..start_index + len];
         let received_len = self.stream.read(receive_buffer);
         self.receive_filled_len += match received_len {
+            Ok(0) => {
+                return Err(io::Error::new(
+                    io::ErrorKind::ConnectionAborted,
+                    "connection closed by remote peer",
+                ));
+            }
             Ok(n) => n,
             Err(ref e) if e.kind() == io::ErrorKind::WouldBlock => return Ok(false),
             Err(ref e) if e.kind() == io::ErrorKind::Interrupted => return Ok(false),
