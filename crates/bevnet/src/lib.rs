@@ -74,8 +74,8 @@ pub struct Connection {
     /// The buffer used to receive a byte block.
     receive_buffer: Vec<u8>,
 
-    /// The secret key used for encryption.
-    secret_key: Aes128Gcm,
+    /// The cipher used for encryption and decryption.
+    cipher: Aes128Gcm,
 }
 
 impl Connection {
@@ -89,7 +89,7 @@ impl Connection {
             receive_message_nonce: None,
             receive_filled_len: 0,
             receive_buffer: Vec::new(),
-            secret_key: Aes128Gcm::new(secret_key),
+            cipher: Aes128Gcm::new(secret_key),
         })
     }
 
@@ -130,7 +130,7 @@ impl Connection {
     pub fn send(&mut self, message: &[u8]) -> io::Result<bool> {
         // Encrypt the message.
         let nonce = Aes128Gcm::generate_nonce(OsRng);
-        let message = self.secret_key.encrypt(&nonce, message).map_err(|e| {
+        let message = self.cipher.encrypt(&nonce, message).map_err(|e| {
             io::Error::new(
                 io::ErrorKind::InvalidData,
                 format!("failed to encrypt message: {}", e),
@@ -286,7 +286,7 @@ impl Connection {
 
         // Decrypting the message.
         let message = self
-            .secret_key
+            .cipher
             .decrypt(Nonce::from_slice(nonce), message)
             .map_err(|e| {
                 io::Error::new(
