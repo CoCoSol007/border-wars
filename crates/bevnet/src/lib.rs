@@ -1,4 +1,46 @@
 //! A networking library for Bevy.
+//!
+//! This contains an implementation of a non-blocking tcp connection and
+//! listener with encryption and auto port forwarding.
+//!
+//! # Example
+//! ```no_run
+//! use std::io;
+//!
+//! use bevnet::{Connection, Listener};
+//!
+//! # fn main() -> io::Result<()> {
+//! let listener = Listener::new()?;
+//! let mut connection = Connection::connect(&listener.connection_string())?;
+//!
+//! // The accept operation is not blocking. So we need to loop here.
+//! let mut server_connection;
+//! loop {
+//!     if let Some(new_connection) = listener.accept()? {
+//!         server_connection = new_connection;
+//!         break;
+//!     }
+//! }
+//!
+//! // We don't need to loop here because the send operation just appends to the send buffer.
+//! connection.send(b"Hello, world!")?;
+//!
+//! // To be sure the message has been sent, we need to update the connection.
+//! while !connection.update()? {
+//!     // Wait until the connection is updated.
+//!     std::thread::yield_now();
+//! }
+//!
+//! // The receive operation is not blocking. So we need to loop here.
+//! loop {
+//!     if let Some(message) = server_connection.receive()? {
+//!         assert_eq!(message, b"Hello, world!");
+//!         break;
+//!     }
+//! }
+//! # Ok(())
+//! # }
+//! ```
 
 use std::collections::LinkedList;
 use std::io::{self, Read, Write};
@@ -11,45 +53,6 @@ use igd::{Gateway, PortMappingProtocol};
 use local_ip_address::local_ip;
 
 /// A non-blocking tcp connection.
-///
-/// # Example
-///
-/// ```no_run
-/// use std::io;
-///
-/// use bevnet::{Connection, Listener};
-///
-/// # fn main() -> io::Result<()> {
-/// let listener = Listener::new()?;
-/// let mut connection = Connection::connect(&listener.connection_string())?;
-///
-/// // The accept operation is not blocking. So we need to loop here.
-/// let mut server_connection;
-/// loop {
-///     if let Some(new_connection) = listener.accept()? {
-///         server_connection = new_connection;
-///         break;
-///     }
-/// }
-///
-/// // We don't need to loop here because the send operation just appends to the send buffer.
-/// connection.send(b"Hello, world!")?;
-///
-/// // To be sure the message has been sent, we need to update the connection.
-/// while !connection.update()? {
-///     // Wait until the connection is updated.
-/// }
-///
-/// // The receive operation is not blocking. So we need to loop here.
-/// loop {
-///     if let Some(message) = server_connection.receive()? {
-///         assert_eq!(message, b"Hello, world!");
-///         break;
-///     }
-/// }
-/// # Ok(())
-/// # }
-/// ```
 pub struct Connection {
     /// The underlying [TcpStream] used for the connection.
     stream: TcpStream,
@@ -305,27 +308,6 @@ impl Connection {
 }
 
 /// A non-blocking tcp listener.
-///
-/// ```no_run
-/// use std::io;
-///
-/// use bevnet::{Connection, Listener};
-///
-/// # fn main() -> io::Result<()> {
-/// let listener = Listener::new()?;
-/// let mut connection = Connection::connect(&listener.connection_string())?;
-///
-/// // The accept operation is not blocking. So we need to loop here.
-/// let mut server_connection;
-/// loop {
-///     if let Some(new_connection) = listener.accept()? {
-///         server_connection = new_connection;
-///         break;
-///     }
-/// }
-/// # Ok(())
-/// # }
-/// ```
 pub struct Listener(TcpListener, Gateway, SocketAddrV4, Key<Aes128Gcm>);
 
 impl Listener {
