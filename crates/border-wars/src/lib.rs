@@ -2,11 +2,11 @@
 
 use bevy::prelude::*;
 
-pub mod menu;
+pub mod scenes;
 
-/// The state of the game.
+/// The current scene of the game.
 #[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash, States)]
-pub enum GameState {
+pub enum CurrentScene {
     /// When we are in the main menu.
     #[default]
     Menu,
