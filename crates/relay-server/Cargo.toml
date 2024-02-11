@@ -1,0 +1,20 @@
+[package]
+name = "relay-server"
+version = "0.2.0"
+edition = "2021"
+license = "GPL-3.0-or-later"
+description = "A relay server for bevnet."
+authors = ["Tipragot <contact@tipragot.fr>"]
+keywords = ["bevy", "network", "game"]
+categories = ["network-programming", "game-development"]
+
+[lints]
+workspace = true
+
+[dependencies]
+tokio = { version = "1.36.0", features = ["macros", "rt-multi-thread"] }
+axum = { version = "0.7.4", features = ["ws"] }
+lazy_static = "1.4.0"
+futures = "0.3.30"
+dashmap = "5.5.3"
+rand = "0.8.5"

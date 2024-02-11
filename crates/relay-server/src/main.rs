@@ -10,7 +10,6 @@ use lazy_static::lazy_static;
 use rand::Rng;
 use tokio::sync::mpsc::{channel, Receiver, Sender};
 use tokio::task::JoinHandle;
-use uuid::Uuid;
 
 lazy_static! {
     static ref CLIENTS: DashMap<u32, Sender<Vec<u8>>> = DashMap::new();
@@ -19,7 +18,7 @@ lazy_static! {
 #[tokio::main]
 async fn main() {
     let app = Router::new().route(
-        "/relay",
+        "/",
         get(|ws: WebSocketUpgrade| async { ws.on_upgrade(handle) }),
     );
     let listener = tokio::net::TcpListener::bind("0.0.0.0:80")
