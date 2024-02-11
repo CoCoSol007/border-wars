@@ -2,7 +2,7 @@
 name = "bevnet"
 version = "0.2.0"
 edition = "2021"
-license = "MIT OR Apache-2.0"
+license = "GPL-3.0-or-later"
 description = "A library for networking in Bevy."
 authors = ["Tipragot <contact@tipragot.fr>"]
 keywords = ["bevy", "network", "game"]
