@@ -1,8 +1,10 @@
 //! A library containing a client to use a relay server.
 
 use std::borrow::Cow;
+use std::fs;
 use std::io::{self};
 use std::net::{SocketAddr, ToSocketAddrs};
+use std::path::PathBuf;
 use std::sync::mpsc::{channel, Receiver, Sender};
 use std::time::{Duration, Instant};
 
@@ -12,6 +14,7 @@ use rand::seq::SliceRandom;
 use tungstenite::handshake::MidHandshake;
 use tungstenite::stream::MaybeTlsStream;
 use tungstenite::{ClientHandshake, HandshakeError, Message, WebSocket};
+use uuid::Uuid;
 
 /// The state of a [Connection].
 #[derive(Debug)]
@@ -28,6 +31,12 @@ enum ConnectionState {
     /// The websocket handshake is in progress.
     Handshaking(MidHandshake<ClientHandshake<MaybeTlsStream<TcpStream>>>),
 
+    /// The websocket handshake is finished.
+    Handshaked(WebSocket<MaybeTlsStream<TcpStream>>),
+
+    /// The [Connection] is registering with the relay server.
+    Registering(WebSocket<MaybeTlsStream<TcpStream>>),
+
     /// The [Connection] is connected.
     Active(WebSocket<MaybeTlsStream<TcpStream>>),
 }
@@ -39,6 +48,15 @@ pub struct Connection {
 
     /// The domain of the relay server.
     domain: String,
+
+    /// The path to the file where the identifier and secret key are stored.
+    data_path: PathBuf,
+
+    /// The identifier of the connection for the relay server.
+    identifier: Option<Uuid>,
+
+    /// The secret key used to authenticate with the relay server.
+    secret: Option<Uuid>,
 
     /// The receiver part of the send channel.
     ///
@@ -56,13 +74,13 @@ pub struct Connection {
     ///
     /// This is used in [Connection::read] to get messages that have been
     /// received from the relay server.
-    receive_receiver: Receiver<(u32, Vec<u8>)>,
+    receive_receiver: Receiver<(Uuid, Vec<u8>)>,
 
     /// The sender part of the send channel.
     ///
     /// This is used in [Connection::update] to store messages that have
     /// been received from the relay server.
-    receive_sender: Sender<(u32, Vec<u8>)>,
+    receive_sender: Sender<(Uuid, Vec<u8>)>,
 
     /// The state of the connection.
     state: ConnectionState,
@@ -72,11 +90,45 @@ impl Connection {
     /// Create a new [Connection].
     pub fn new<'a>(domain: impl Into<Cow<'a, str>>) -> io::Result<Self> {
         let domain = domain.into();
+
+        // Loads the identifier and secret key from disk.
+        let (data_path, identifier, secret) = {
+            // Find the relay data file path.
+            let mut path = home::home_dir().ok_or_else(|| {
+                io::Error::new(io::ErrorKind::NotFound, "could not find home directory")
+            })?;
+            path.push(".relay-data");
+
+            // Check if the file exists.
+            match path.exists() {
+                true => {
+                    // Read the file and parse the identifier and secret key.
+                    let contents = fs::read(&path)?;
+                    if contents.len() != 32 {
+                        return Err(io::Error::new(
+                            io::ErrorKind::InvalidData,
+                            "invalid data in .relay-data",
+                        ));
+                    }
+                    let identifier = Uuid::from_slice(&contents[..16]).map_err(io::Error::other)?;
+                    let secret = Uuid::from_slice(&contents[16..]).map_err(io::Error::other)?;
+                    (path, Some(identifier), Some(secret))
+                }
+                false => (path, None, None),
+            }
+        };
+
+        // Create the communication channels.
         let (send_sender, send_receiver) = channel();
         let (receive_sender, receive_receiver) = channel();
+
+        // Create the connection and return it.
         Ok(Self {
             address_list: (domain.as_ref(), 443).to_socket_addrs()?.collect(),
             domain: domain.into_owned(),
+            data_path,
+            identifier,
+            secret,
             send_receiver,
             send_sender,
             receive_receiver,
@@ -85,15 +137,20 @@ impl Connection {
         })
     }
 
+    /// Get the identifier of the connection.
+    pub const fn identifier(&self) -> Option<Uuid> {
+        self.identifier
+    }
+
     /// Send a message to the target client.
-    pub fn send(&self, target_id: u32, message: Cow<[u8]>) {
-        let mut data = message.into_owned();
-        data.extend_from_slice(&target_id.to_be_bytes());
+    pub fn send<'a>(&self, target_id: Uuid, message: impl Into<Cow<'a, [u8]>>) {
+        let mut data = message.into().into_owned();
+        data.extend_from_slice(target_id.as_bytes());
         self.send_sender.send(Message::Binary(data)).ok();
     }
 
-    /// Receive a message from the target client.
-    pub fn read(&self) -> Option<(u32, Vec<u8>)> {
+    /// Receive a message from the relay connection.
+    pub fn read(&self) -> Option<(Uuid, Vec<u8>)> {
         self.receive_receiver.try_recv().ok()
     }
 
@@ -151,7 +208,7 @@ impl Connection {
     /// Start the websocket handshake.
     fn start_handshake(&mut self, stream: TcpStream) -> ConnectionState {
         match tungstenite::client_tls(format!("wss://{}", self.domain), stream) {
-            Ok((socket, _)) => ConnectionState::Active(socket),
+            Ok((socket, _)) => ConnectionState::Handshaked(socket),
             Err(HandshakeError::Interrupted(handshake)) => ConnectionState::Handshaking(handshake),
             Err(HandshakeError::Failure(e)) => {
                 warn!("handshake failed with the relay server: {e}");
@@ -166,10 +223,81 @@ impl Connection {
         handshake: MidHandshake<ClientHandshake<MaybeTlsStream<TcpStream>>>,
     ) -> ConnectionState {
         match handshake.handshake() {
-            Ok((socket, _)) => ConnectionState::Active(socket),
+            Ok((socket, _)) => ConnectionState::Handshaked(socket),
             Err(HandshakeError::Interrupted(handshake)) => ConnectionState::Handshaking(handshake),
             Err(HandshakeError::Failure(e)) => {
                 warn!("handshake failed with the relay server: {e}");
+                ConnectionState::Disconnected
+            }
+        }
+    }
+
+    /// Start authentication with the relay server.
+    fn start_authentication(
+        &mut self,
+        mut socket: WebSocket<MaybeTlsStream<TcpStream>>,
+    ) -> ConnectionState {
+        match (self.identifier, self.secret) {
+            (Some(identifier), Some(secret)) => {
+                // Create the authentication message.
+                let mut data = Vec::with_capacity(32);
+                data.extend(identifier.as_bytes());
+                data.extend(secret.as_bytes());
+
+                // Send the authentication message.
+                match socket.send(Message::Binary(data)) {
+                    Ok(()) => ConnectionState::Active(socket),
+                    Err(e) => {
+                        warn!("failed to send authentication message: {e}");
+                        ConnectionState::Disconnected
+                    }
+                }
+            }
+            _ => {
+                // Send empty authentication message to request a new identifier and secret key.
+                match socket.send(Message::Binary(vec![])) {
+                    Ok(()) => ConnectionState::Registering(socket),
+                    Err(e) => {
+                        warn!("failed to send registration message: {e}");
+                        ConnectionState::Disconnected
+                    }
+                }
+            }
+        }
+    }
+
+    /// Wait for the registration response.
+    fn get_registration_response(
+        &mut self,
+        mut socket: WebSocket<MaybeTlsStream<TcpStream>>,
+    ) -> ConnectionState {
+        match socket.read() {
+            Ok(message) => {
+                // Check the message length.
+                let data = message.into_data();
+                if data.len() != 32 {
+                    warn!("received malformed registration response");
+                    return ConnectionState::Disconnected;
+                }
+
+                // Extract the client identifier and secret.
+                self.identifier = Some(Uuid::from_slice(&data[..16]).expect("invalid identifier"));
+                self.secret = Some(Uuid::from_slice(&data[16..]).expect("invalid secret"));
+
+                // Save the client identifier and secret.
+                fs::write(&self.data_path, data).ok();
+
+                // Activate the connection.
+                ConnectionState::Active(socket)
+            }
+            Err(tungstenite::Error::Io(ref e))
+                if e.kind() == std::io::ErrorKind::WouldBlock
+                    || e.kind() == std::io::ErrorKind::Interrupted =>
+            {
+                ConnectionState::Registering(socket)
+            }
+            Err(e) => {
+                warn!("failed to receive registration response: {e}");
                 ConnectionState::Disconnected
             }
         }
@@ -203,18 +331,14 @@ impl Connection {
                 Ok(message) => {
                     // Check the message length.
                     let mut data = message.into_data();
-                    if data.len() < 4 {
+                    if data.len() < 16 {
                         warn!("received malformed message with length: {}", data.len());
                         continue;
                     }
 
                     // Extract the sender ID.
-                    let id_start = data.len() - 4;
-                    let sender_id = u32::from_be_bytes(
-                        data[id_start..]
-                            .try_into()
-                            .unwrap_or_else(|_| unreachable!()),
-                    );
+                    let id_start = data.len() - 16;
+                    let sender_id = Uuid::from_slice(&data[id_start..]).expect("invalid sender id");
                     data.truncate(id_start);
 
                     // Send the message to the receive channel.
@@ -250,6 +374,8 @@ impl Connection {
             ConnectionState::Connecting(stream, start) => self.check_connection(stream, start),
             ConnectionState::Connected(stream) => self.start_handshake(stream),
             ConnectionState::Handshaking(handshake) => self.continue_handshake(handshake),
+            ConnectionState::Handshaked(socket) => self.start_authentication(socket),
+            ConnectionState::Registering(socket) => self.get_registration_response(socket),
             ConnectionState::Active(socket) => self.update_connection(socket),
         }
     }

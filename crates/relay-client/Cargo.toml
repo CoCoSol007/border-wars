@@ -14,5 +14,7 @@ workspace = true
 [dependencies]
 tungstenite = { version = "0.21.0", features = ["rustls-tls-native-roots"] }
 mio = { version = "0.8.10", features = ["net", "os-poll"] }
+uuid = "1.7.0"
 rand = "0.8.5"
+home = "0.5.9"
 log = "0.4.20"

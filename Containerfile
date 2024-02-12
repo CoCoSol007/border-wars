@@ -8,4 +8,5 @@ FROM alpine:latest
 WORKDIR /app
 COPY --from=builder /app/target/release/relay-server .
 EXPOSE 80/tcp
+VOLUME [ "/data" ]
 CMD ["./relay-server"]
