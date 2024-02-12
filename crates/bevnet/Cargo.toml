@@ -12,7 +12,4 @@ categories = ["network-programming", "game-development"]
 workspace = true
 
 [dependencies]
-local-ip-address = "0.5.7"
-aes-gcm = "0.10.3"
-base64 = "0.21.7"
-igd = "0.12.1"
+relay-client = { path = "../relay-client" }
