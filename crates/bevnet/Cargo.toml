@@ -13,3 +13,8 @@ workspace = true
 
 [dependencies]
 relay-client = { path = "../relay-client" }
+serde = "1.0.196"
+bincode = "1.3.3"
+dashmap = "5.5.3"
+bevy = "0.12.1"
+uuid = "1.7.0"
