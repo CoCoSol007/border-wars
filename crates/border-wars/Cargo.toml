@@ -13,3 +13,5 @@ workspace = true
 [dependencies]
 bevy = "0.12.1"
 bevy_egui = "0.24.0"
+num = "0.4.1"
+partial-min-max = "0.4.0"
