@@ -2,7 +2,7 @@
 
 use bevy::prelude::*;
 
-pub mod hex;
+pub mod map;
 pub mod scenes;
 
 /// The current scene of the game.

@@ -39,7 +39,7 @@ impl<T: HexNumber> HexPosition<T> {
     /// # Example
     ///
     /// ```no_run
-    /// use border_wars::hex::HexPosition;
+    /// use border_wars::map::hex::HexPosition;
     ///
     /// let a = HexPosition { q: 0, r: 0 };
     /// let b = HexPosition { q: 1, r: 1 };
@@ -70,7 +70,7 @@ impl<T: HexNumber + Eq + Hash + std::cmp::PartialOrd + num::ToPrimitive> HexPosi
     /// # Example
     ///
     /// ```
-    /// use border_wars::hex::HexPosition;
+    /// use border_wars::map::hex::HexPosition;
     ///
     /// let position = HexPosition { q: 0, r: 0 };
     ///
