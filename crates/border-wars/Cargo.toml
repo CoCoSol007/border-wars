@@ -11,5 +11,5 @@ authors = ["CoCoSol"]
 workspace = true
 
 [dependencies]
-bevy = "0.12.1"
+bevy = { version = "0.12.1", features = ["dynamic_linking"] }
 bevy_egui = "0.24.0"
