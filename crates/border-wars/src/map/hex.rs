@@ -4,6 +4,7 @@ use std::collections::HashSet;
 use std::hash::Hash;
 use std::ops::{Add, AddAssign, Sub, SubAssign};
 
+use num::cast::AsPrimitive;
 use num::{FromPrimitive, Signed};
 use partial_min_max::{max, min};
 
@@ -24,7 +25,7 @@ pub struct HexPosition<T: HexNumber> {
     pub r: T,
 }
 
-impl<T: HexNumber> HexPosition<T> {
+impl<T: HexNumber + AsPrimitive<f32>> HexPosition<T> {
     /// Returns the distance between two [HexPosition]s.
     ///
     /// # How it works
@@ -54,6 +55,34 @@ impl<T: HexNumber> HexPosition<T> {
 
         // Manhattan distance = (abs(dq) + abs(dr) + abs(ds)) / 2
         (dq + dr + ds) / (T::one() + T::one())
+    }
+
+    /// Converts the current [HexPosition] into a pixel coordinate.
+    /// Input: The size of the hexagon in pixels (witdh, height).
+    ///
+    /// If you want to learn more about pixel coordinates conversion,
+    /// you can check the
+    /// [documentation](https://www.redblobgames.com/grids/hexagons/#hex-to-pixel).
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use border_wars::map::hex::HexPosition;
+    ///
+    /// let position = HexPosition { q: 1, r: 0 };
+    /// assert_eq!(
+    ///     position.to_pixel_coordinates((1.0, 1.0)),
+    ///     (3f32.sqrt(), 0.0)
+    /// );
+    /// ```
+    pub fn to_pixel_coordinates(&self, size: (f32, f32)) -> (f32, f32) {
+        (
+            size.0
+                * 3f32
+                    .sqrt()
+                    .mul_add(self.q.as_(), 3f32.sqrt() / 2.0 * (self.r.as_())),
+            size.1 * (3.0 / 2.0 * self.r.as_()),
+        )
     }
 }
 
