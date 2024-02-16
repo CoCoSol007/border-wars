@@ -1,31 +1,266 @@
 //! All functions related to calculations in a hexagonal grid.
 
-use std::collections::HashSet;
-use std::hash::Hash;
-use std::ops::{Add, AddAssign, Sub, SubAssign};
+use std::ops::{
+    Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Rem, RemAssign, Sub, SubAssign,
+};
 
-use num::cast::AsPrimitive;
-use num::{FromPrimitive, Signed};
-use partial_min_max::{max, min};
+use paste::paste;
 
-/// Represents a number that can be used in a hexagonal grid.
-pub trait HexNumber: Signed + PartialEq + Copy + PartialOrd + FromPrimitive {}
+/// Represents a number that can be used in calculations for hexagonal grids.
+pub trait Number:
+    Copy
+    + PartialEq
+    + PartialOrd
+    + Add<Output = Self>
+    + Sub<Output = Self>
+    + Mul<Output = Self>
+    + Div<Output = Self>
+    + Rem<Output = Self>
+    + Neg<Output = Self>
+    + AddAssign
+    + SubAssign
+    + MulAssign
+    + DivAssign
+    + RemAssign
+    + std::fmt::Debug
+{
+    /// The number -2.
+    const MINUS_TWO: Self;
 
-impl<T: Signed + PartialEq + Copy + PartialOrd + FromPrimitive> HexNumber for T {}
+    /// The number -1.
+    const MINUS_ONE: Self;
+
+    /// The number 0.
+    const ZERO: Self;
+
+    /// The number 1.
+    const ONE: Self;
+
+    /// The number 2.
+    const TWO: Self;
+
+    /// Returns the maximum of `self` and `other`.
+    fn max(self, other: Self) -> Self {
+        if self > other { self } else { other }
+    }
+
+    /// Returns the minimum of `self` and `other`.
+    fn min(self, other: Self) -> Self {
+        if self < other { self } else { other }
+    }
+
+    /// Returns the absolute value of `self`.
+    fn abs(self) -> Self {
+        if self < Self::ZERO { -self } else { self }
+    }
+
+    /// Converts an `usize` to `Self`.
+    fn from_usize(value: usize) -> Self;
+
+    /// Converts `self` to an `f32`.
+    fn to_f32(self) -> f32;
+
+    /// Converts an `f32` to `Self`.
+    fn from_f32(value: f32) -> Self;
+}
+
+/// Implements the `Number` trait for the given types.
+macro_rules! number_impl {
+    ($($t:ty,)*) => {paste!{$(
+        impl Number for $t {
+            const MINUS_ONE: Self = - [< 1 $t >];
+            const MINUS_TWO: Self = - [< 2 $t >];
+            const ZERO: Self = [< 0 $t >];
+            const ONE: Self = [< 1 $t >];
+            const TWO: Self = [< 2 $t >];
+
+
+            fn from_usize(value: usize) -> Self {
+                value as $t
+            }
+
+            fn to_f32(self) -> f32 {
+                self as f32
+            }
+
+            fn from_f32(value: f32) -> Self {
+                value as $t
+            }
+        }
+    )*}};
+}
+
+number_impl! {
+    i8, i16, i32, i64, i128, isize,
+    f32, f64,
+}
 
 /// Represents a position in a hexagonal grid.
 /// We use the axial coordinate system explained in this
 /// [documentation](https://www.redblobgames.com/grids/hexagons/#coordinates).
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-pub struct HexPosition<T: HexNumber> {
-    /// Q coordinate.
-    pub q: T,
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+pub struct HexPosition<T: Number>(pub T, pub T);
 
-    /// R coordinate.
-    pub r: T,
+/// All possible directions in a hexagonal grid.
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+pub enum HexDirection {
+    /// The direction right.
+    Right,
+
+    /// The direction up-right.
+    UpRight,
+
+    /// The direction up-left.
+    UpLeft,
+
+    /// The direction left.
+    Left,
+
+    /// The direction down-left.
+    DownLeft,
+
+    /// The direction down-right.
+    DownRight,
 }
 
-impl<T: HexNumber + AsPrimitive<f32>> HexPosition<T> {
+impl HexDirection {
+    /// Returns the vector ([HexPosition]) of the direction.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use border_wars::map::hex::{HexDirection, HexPosition};
+    ///
+    /// let direction = HexDirection::Right;
+    /// assert_eq!(direction.to_vector(), HexPosition(1, 0));
+    /// ```
+    pub const fn to_vector<T: Number>(self) -> HexPosition<T> {
+        match self {
+            Self::Right => HexPosition(T::ONE, T::ZERO),
+            Self::UpRight => HexPosition(T::ONE, T::MINUS_ONE),
+            Self::UpLeft => HexPosition(T::ZERO, T::MINUS_ONE),
+            Self::Left => HexPosition(T::MINUS_ONE, T::ZERO),
+            Self::DownLeft => HexPosition(T::MINUS_ONE, T::ONE),
+            Self::DownRight => HexPosition(T::ZERO, T::ONE),
+        }
+    }
+}
+
+/// A hexagonal ring iterator.
+pub struct HexRing<T: Number> {
+    /// The current position in the ring.
+    current: HexPosition<T>,
+
+    /// The direction of the current position to the next in the ring.
+    direction: HexDirection,
+
+    /// The radius of the ring.
+    radius: usize,
+
+    /// The index of the current position in the ring.
+    index: usize,
+}
+
+impl<T: Number> Iterator for HexRing<T> {
+    type Item = HexPosition<T>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.index >= self.radius {
+            self.direction = match self.direction {
+                HexDirection::Right => HexDirection::UpRight,
+                HexDirection::UpRight => HexDirection::UpLeft,
+                HexDirection::UpLeft => HexDirection::Left,
+                HexDirection::Left => HexDirection::DownLeft,
+                HexDirection::DownLeft => HexDirection::DownRight,
+                HexDirection::DownRight => return None,
+            };
+            self.index = 0;
+        }
+        let result = self.current;
+        self.current += self.direction.to_vector();
+        self.index += 1;
+        Some(result)
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        let remaining = match self.direction {
+            HexDirection::Right => self.radius * 6,
+            HexDirection::UpRight => self.radius * 5,
+            HexDirection::UpLeft => self.radius * 4,
+            HexDirection::Left => self.radius * 3,
+            HexDirection::DownLeft => self.radius * 2,
+            HexDirection::DownRight => self.radius,
+        } - self.index;
+        (remaining, Some(remaining))
+    }
+}
+
+/// A hexagonal spiral iterator.
+pub struct HexSpiral<T: Number> {
+    /// The origin of the spiral.
+    origin: HexPosition<T>,
+
+    /// The current ring of the spiral.
+    current: HexRing<T>,
+
+    /// The radius of the spiral.
+    radius: usize,
+
+    /// The index of the current ring in the spiral.
+    index: usize,
+}
+
+impl<T: Number> Iterator for HexSpiral<T> {
+    type Item = HexPosition<T>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        // The origin of the spiral.
+        if self.index == 0 {
+            self.index += 1;
+            return Some(self.origin);
+        }
+        if self.index > self.radius {
+            return None;
+        }
+        let mut result = self.current.next();
+        if result.is_none() && self.index < self.radius {
+            self.index += 1;
+            self.current = self.origin.ring(self.index);
+            result = self.current.next();
+        }
+        result
+    }
+}
+
+impl<T: Number> HexPosition<T> {
+    /// Converts the current [HexPosition] into a pixel coordinate.
+    /// Input: The size of the hexagon in pixels (witdh, height).
+    ///
+    /// If you want to learn more about pixel coordinates conversion,
+    /// you can check the
+    /// [documentation](https://www.redblobgames.com/grids/hexagons/#hex-to-pixel).
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use border_wars::map::hex::HexPosition;
+    ///
+    /// let position = HexPosition(1, 0);
+    /// assert_eq!(
+    ///     position.to_pixel_coordinates((1.0, 1.0)),
+    ///     (3f32.sqrt(), 0.0)
+    /// );
+    /// ```
+    pub fn to_pixel_coordinates(&self, size: (f32, f32)) -> (f32, f32) {
+        (
+            size.0
+                * 3f32
+                    .sqrt()
+                    .mul_add(T::to_f32(self.0), 3f32.sqrt() / 2.0 * T::to_f32(self.0)),
+            size.1 * (3.0 / 2.0 * T::to_f32(self.1)),
+        )
+    }
+
     /// Returns the distance between two [HexPosition]s.
     ///
     /// # How it works
@@ -42,114 +277,106 @@ impl<T: HexNumber + AsPrimitive<f32>> HexPosition<T> {
     /// ```no_run
     /// use border_wars::map::hex::HexPosition;
     ///
-    /// let a = HexPosition { q: 0, r: 0 };
-    /// let b = HexPosition { q: 1, r: 1 };
+    /// let a = HexPosition(0, 0);
+    /// let b = HexPosition(1, 1);
     ///
-    /// assert_eq!(a.distance_to(&b), 2);
+    /// assert_eq!(a.distance(b), 2);
     /// ```
-    pub fn distance_to(&self, other: &Self) -> T {
-        // Calculate the difference between the q and r coordinates.
-        let dq = (self.q - other.q).abs();
-        let dr = (self.r - other.r).abs();
-        let ds = dq + dr;
-
-        // Manhattan distance = (abs(dq) + abs(dr) + abs(ds)) / 2
-        (dq + dr + ds) / (T::one() + T::one())
+    pub fn distance(self, other: Self) -> T {
+        let Self(x, y) = self - other;
+        x.abs() + y.abs() + (x + y).abs() / T::TWO
     }
 
-    /// Converts the current [HexPosition] into a pixel coordinate.
-    /// Input: The size of the hexagon in pixels (witdh, height).
-    ///
-    /// If you want to learn more about pixel coordinates conversion,
-    /// you can check the
-    /// [documentation](https://www.redblobgames.com/grids/hexagons/#hex-to-pixel).
+    /// Returns the hexagonal ring of the given radius.
+    /// If you want to learn more about hexagonal grids, check the
+    /// [documentation](https://www.redblobgames.com/grids/hexagons/#rings)
     ///
     /// # Example
     ///
     /// ```no_run
     /// use border_wars::map::hex::HexPosition;
     ///
-    /// let position = HexPosition { q: 1, r: 0 };
-    /// assert_eq!(
-    ///     position.to_pixel_coordinates((1.0, 1.0)),
-    ///     (3f32.sqrt(), 0.0)
-    /// );
+    /// let position = HexPosition(0, 0);
+    /// let radius = 1;
+    ///
+    /// for ring_position in position.ring(radius) {
+    ///     println!("{:?}", ring_position);
+    /// }
     /// ```
-    pub fn to_pixel_coordinates(&self, size: (f32, f32)) -> (f32, f32) {
-        (
-            size.0
-                * 3f32
-                    .sqrt()
-                    .mul_add(self.q.as_(), 3f32.sqrt() / 2.0 * (self.r.as_())),
-            size.1 * (3.0 / 2.0 * self.r.as_()),
-        )
+    pub fn ring(self, radius: usize) -> HexRing<T> {
+        HexRing {
+            current: self + HexDirection::DownLeft.to_vector() * T::from_usize(radius),
+            direction: HexDirection::Right,
+            radius,
+            index: 0,
+        }
     }
-}
 
-impl<T: HexNumber + Eq + Hash + std::cmp::PartialOrd + num::ToPrimitive> HexPosition<T> {
-    /// Returns all positions within a given `range` from the current
-    /// `HexPosition`.
-    ///
-    /// This function iterates over the possible q and r values within the
-    /// specified range.
-    /// Note that the original position is also returned.
-    ///
-    /// For more details, refer to: https://www.redblobgames.com/grids/hexagons/#range
+    /// Returns the hexagonal spiral of the given radius.
+    /// If you want to learn more about hexagonal grids, check the
+    /// [documentation](https://www.redblobgames.com/grids/hexagons/#rings-spiral)
     ///
     /// # Example
     ///
-    /// ```
+    /// ```no_run
     /// use border_wars::map::hex::HexPosition;
     ///
-    /// let position = HexPosition { q: 0, r: 0 };
+    /// let position = HexPosition(0, 0);
+    /// let radius = 1;
     ///
-    /// let positions = position.range(1);
-    ///
-    /// assert_eq!(positions.len(), 7);
+    /// for spiral_position in position.spiral(radius) {
+    ///     println!("{:?}", spiral_position);
+    /// }
     /// ```
-    pub fn range(&self, range: T) -> HashSet<Self> {
-        let mut result_positions = HashSet::new();
-        for q in num::range_inclusive(-range, range) {
-            for r in num::range_inclusive(max(-range, -q - range), min(range, -q + range)) {
-                result_positions.insert(Self { q, r });
+    pub fn spiral(self, radius: usize) -> HexSpiral<T> {
+        HexSpiral {
+            origin: self,
+            current: self.ring(1),
+            radius,
+            index: 0,
+        }
+    }
+}
+
+/// Implementation of the arithmetic operators for hexagonal positions.
+macro_rules! impl_ops {
+    ($(($t:ty, $n:ident),)*) => {paste!{$(
+        impl<T: Number> $t for HexPosition<T> {
+            type Output = Self;
+
+            fn $n(self, rhs: Self) -> Self {
+                Self(self.0.$n(rhs.0), self.1.$n(rhs.1))
             }
         }
-        result_positions
-    }
-}
 
-impl<T: HexNumber> Add<Self> for HexPosition<T> {
-    type Output = Self;
+        impl<T: Number> $t<T> for HexPosition<T> {
+            type Output = Self;
 
-    fn add(self, other: Self) -> Self::Output {
-        Self {
-            q: self.q + other.q,
-            r: self.r + other.r,
+            fn $n(self, rhs: T) -> Self {
+                Self(self.0.$n(rhs), self.1.$n(rhs))
+            }
         }
-    }
-}
 
-impl<T: HexNumber + AddAssign> AddAssign<Self> for HexPosition<T> {
-    fn add_assign(&mut self, other: Self) {
-        self.q += other.q;
-        self.r += other.r;
-    }
-}
-
-impl<T: HexNumber> Sub<Self> for HexPosition<T> {
-    type Output = Self;
-
-    fn sub(self, other: Self) -> Self {
-        Self {
-            q: self.q - other.q,
-            r: self.r - other.r,
+        impl<T: Number> [< $t Assign >] for HexPosition<T> {
+            fn [< $n _assign >](&mut self, rhs: Self) {
+                self.0.[< $n _assign >](rhs.0) ;
+                self.1.[< $n _assign >](rhs.1) ;
+            }
         }
-    }
+
+        impl<T: Number> [< $t Assign >]<T> for HexPosition<T> {
+            fn [< $n _assign >](&mut self, rhs: T) {
+                self.0.[< $n _assign >](rhs);
+                self.1.[< $n _assign >](rhs);
+            }
+        }
+    )*}};
 }
 
-impl<T: HexNumber + SubAssign> SubAssign<Self> for HexPosition<T> {
-    fn sub_assign(&mut self, other: Self) {
-        self.q -= other.q;
-        self.r -= other.r;
-    }
+impl_ops! {
+    (Add, add),
+    (Sub, sub),
+    (Mul, mul),
+    (Div, div),
+    (Rem, rem),
 }

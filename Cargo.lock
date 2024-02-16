@@ -1318,6 +1318,7 @@ dependencies = [
  "bevy_egui",
  "num",
  "partial-min-max",
+ "paste",
 ]
 
 [[package]]
