@@ -2,7 +2,8 @@
 
 use bevy::prelude::*;
 
-use crate::CurrentScene;
+use crate::{CurrentScene, change_scaling};
+
 
 /// The plugin for the menu.
 pub struct MenuPlugin;
@@ -10,52 +11,47 @@ pub struct MenuPlugin;
 impl Plugin for MenuPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, menu_ui.run_if(in_state(CurrentScene::Menu)));
+        app.add_systems(Update, change_scaling);
     }
 }
+
 /// Display the UI of the menu to host a game or join one.
 fn menu_ui(mut commands: Commands) {
     commands.spawn(Camera2dBundle::default());
-    // Green
+
+    // Main node
     commands
         .spawn(NodeBundle {
             style: Style {
-                margin: UiRect {
-                    left: (Val::Auto),
-                    right: (Val::Auto),
-                    top: (Val::Px(0.)),
-                    bottom: (Val::Px(0.)),
-                },
-                width: Val::Percent(55.),
-                height: Val::Percent(100.),
+                margin: UiRect::all(Val::Auto),
+                width: Val::Px(1280.),
+                height: Val::Px(720.),
                 flex_direction: FlexDirection::Column,
                 ..default()
             },
+            z_index: ZIndex::Local(0),
             ..default()
         })
-        // Text
-        .with_children(|parent| {
-            parent.spawn(
-                NodeBundle{
-                    style: Style {
-                        margin: UiRect {
-                            left: (Val::Auto),
-                            right: (Val::Auto),
-                            top: (Val::Percent(5.)),
-                            bottom: (Val::Percent(15.)),
-                        },
-                        width: Val::Percent(90.),
-                        height: Val::Percent(25.),
-                        ..default()
+
+        // Spawn Border War Text
+        .with_children(|main_node| {
+            main_node.spawn(NodeBundle {
+                style: Style {
+                    margin: UiRect {
+                        left: (Val::Auto),
+                        right: (Val::Auto),
+                        top: (Val::Px(25.)),
+                        bottom: (Val::Px(25.)),
                     },
-                    background_color: BackgroundColor(Color::RED),
+                    width: Val::Px(650.),
+                    height: Val::Px(300.),
                     ..default()
-                }
-                
-            );
-        })
-        // BLUE
-        .with_children(|parent| {
-            parent
+                },
+                background_color: BackgroundColor(Color::RED),
+                ..default()
+            });
+
+            main_node
                 .spawn(NodeBundle {
                     style: Style {
                         flex_direction: FlexDirection::Column,
@@ -63,49 +59,103 @@ fn menu_ui(mut commands: Commands) {
                             left: (Val::Auto),
                             right: (Val::Auto),
                             top: (Val::Auto),
-                            bottom: (Val::Percent(5.)),
+                            bottom: (Val::Px(25.)),
                         },
-                        width: Val::Percent(85.),
+                        width: Val::Px(552.5),
                         height: Val::Percent(70.),
                         ..default()
                     },
                     ..default()
                 })
-                // YELLOW_GREEN 1
-                .with_children(|parent| {
-                    parent.spawn(NodeBundle {
-                        style: Style {
-                            width: Val::Percent(100.),
-                            height: Val::Percent(45.),
-                            margin: UiRect {
-                                left: (Val::Auto),
-                                right: (Val::Auto),
-                                top: (Val::Auto),
-                                bottom: (Val::Auto),
-                            },
+
+                .with_children(|container| {
+
+                    container
+                        .spawn(NodeBundle {
+                            style: default_style(),
                             ..default()
-                        },
-                        background_color: BackgroundColor(Color::YELLOW_GREEN),
-                        ..default()
-                    });
-                })
-                // YELLOW_GREEN 2
-                .with_children(|parent| {
-                    parent.spawn(NodeBundle {
-                        style: Style {
-                            width: Val::Percent(100.),
-                            height: Val::Percent(45.),
-                            margin: UiRect {
-                                left: (Val::Auto),
-                                right: (Val::Auto),
-                                top: (Val::Auto),
-                                bottom: (Val::Auto),
-                            },
-                            ..default()
-                        },
-                        background_color: BackgroundColor(Color::YELLOW_GREEN),
-                        ..default()
-                    });
+                        })
+                        
+                        .with_children(|host| {
+
+                            host.spawn(NodeBundle {
+                                style: default_style(),
+                                background_color: BackgroundColor(Color::YELLOW),
+                                ..default()
+                            });
+
+                            host.spawn(NodeBundle {
+                                    style: default_style(),
+                                    background_color: BackgroundColor(Color::YELLOW),
+                                    ..default()
+                                });
+                        });
+                
+                    container.spawn(NodeBundle {
+                                style: default_style(),
+                                ..default()
+                            })
+
+                            .with_children(|join| {
+
+                                join.spawn(NodeBundle {
+                                    style: default_style(),
+                                    background_color: BackgroundColor(Color::YELLOW),
+                                    ..default()
+                                });
+
+                                join.spawn(NodeBundle {
+                                        style: default_style(),
+                                        background_color: BackgroundColor(Color::YELLOW),
+                                        ..default()
+                                    });
+                        });
                 });
         });
+
+    // Spawn Settings button
+    commands.spawn(NodeBundle {
+        style: Style {
+            width: Val::Px(75.),
+            aspect_ratio: Some(1.),
+            margin: UiRect {
+                left: Val::Px(25.),
+                right: Val::Auto,
+                top: Val::Px(25.),
+                bottom: Val::Auto,
+            },
+            ..default()
+        },
+        z_index: ZIndex::Local(1),
+        background_color: BackgroundColor(Color::BLUE),
+        ..default()
+    });
+
+    // Spawn Info button
+    commands.spawn(NodeBundle {
+        style: Style {
+            width: Val::Px(75.),
+            aspect_ratio: Some(1.),
+            margin: UiRect {
+                left: Val::Auto,
+                right: Val::Px(25.),
+                top: Val::Px(25.),
+                bottom: Val::Auto,
+            },
+            ..default()
+        },
+        z_index: ZIndex::Local(1),
+        background_color: BackgroundColor(Color::BLUE),
+        ..default()
+    });
+}
+
+fn default_style() -> Style {
+    Style {
+        flex_direction: FlexDirection::Column,
+        width: Val::Percent(100.),
+        height: Val::Percent(45.),
+        margin: UiRect::all(Val::Auto),
+        ..default()
+    }
 }
