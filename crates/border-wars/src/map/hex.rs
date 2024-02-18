@@ -256,7 +256,7 @@ impl<T: Number> HexPosition<T> {
             size.0
                 * 3f32
                     .sqrt()
-                    .mul_add(T::to_f32(self.0), 3f32.sqrt() / 2.0 * T::to_f32(self.0)),
+                    .mul_add(T::to_f32(self.0), 3f32.sqrt() / 2.0 * T::to_f32(self.1)),
             size.1 * (3.0 / 2.0 * T::to_f32(self.1)),
         )
     }
