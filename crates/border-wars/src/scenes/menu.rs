@@ -2,8 +2,7 @@
 
 use bevy::prelude::*;
 
-use crate::{CurrentScene, change_scaling};
-
+use crate::{change_scaling, CurrentScene};
 
 /// The plugin for the menu.
 pub struct MenuPlugin;
@@ -19,7 +18,6 @@ impl Plugin for MenuPlugin {
 fn menu_ui(mut commands: Commands) {
     commands.spawn(Camera2dBundle::default());
 
-    // Main node
     commands
         .spawn(NodeBundle {
             style: Style {
@@ -32,8 +30,6 @@ fn menu_ui(mut commands: Commands) {
             z_index: ZIndex::Local(0),
             ..default()
         })
-
-        // Spawn Border War Text
         .with_children(|main_node| {
             main_node.spawn(NodeBundle {
                 style: Style {
@@ -67,53 +63,45 @@ fn menu_ui(mut commands: Commands) {
                     },
                     ..default()
                 })
-
                 .with_children(|container| {
+                    container
+                        .spawn(NodeBundle {
+                            style: default_style(),
+                            ..default()
+                        })
+                        .with_children(|host| {
+                            host.spawn(NodeBundle {
+                                style: default_style(),
+                                background_color: BackgroundColor(Color::YELLOW),
+                                ..default()
+                            });
+                            host.spawn(NodeBundle {
+                                style: default_style(),
+                                background_color: BackgroundColor(Color::YELLOW),
+                                ..default()
+                            });
+                        });
 
                     container
                         .spawn(NodeBundle {
                             style: default_style(),
                             ..default()
                         })
-                        
-                        .with_children(|host| {
-
-                            host.spawn(NodeBundle {
+                        .with_children(|join| {
+                            join.spawn(NodeBundle {
                                 style: default_style(),
                                 background_color: BackgroundColor(Color::YELLOW),
                                 ..default()
                             });
-
-                            host.spawn(NodeBundle {
-                                    style: default_style(),
-                                    background_color: BackgroundColor(Color::YELLOW),
-                                    ..default()
-                                });
-                        });
-                
-                    container.spawn(NodeBundle {
+                            join.spawn(NodeBundle {
                                 style: default_style(),
+                                background_color: BackgroundColor(Color::YELLOW),
                                 ..default()
-                            })
-
-                            .with_children(|join| {
-
-                                join.spawn(NodeBundle {
-                                    style: default_style(),
-                                    background_color: BackgroundColor(Color::YELLOW),
-                                    ..default()
-                                });
-
-                                join.spawn(NodeBundle {
-                                        style: default_style(),
-                                        background_color: BackgroundColor(Color::YELLOW),
-                                        ..default()
-                                    });
+                            });
                         });
                 });
         });
 
-    // Spawn Settings button
     commands.spawn(NodeBundle {
         style: Style {
             width: Val::Px(75.),
@@ -131,7 +119,6 @@ fn menu_ui(mut commands: Commands) {
         ..default()
     });
 
-    // Spawn Info button
     commands.spawn(NodeBundle {
         style: Style {
             width: Val::Px(75.),

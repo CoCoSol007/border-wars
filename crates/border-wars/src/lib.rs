@@ -27,4 +27,3 @@ pub fn change_scaling(mut ui_scale: ResMut<UiScale>, window: Query<&Window>) {
     );
     ui_scale.0 = if a < b { a } else { b } as f64
 }
-
