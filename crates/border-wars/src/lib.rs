@@ -5,7 +5,7 @@ use bevy::prelude::*;
 pub mod scenes;
 
 /// The current scene of the game.
-#[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash, States)]
+#[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash, States, Component)]
 pub enum CurrentScene {
     /// When we are in the main menu.
     #[default]
@@ -16,10 +16,13 @@ pub enum CurrentScene {
 
     /// When we play this wonderful game.
     Game,
+
+    /// When we are in the settings menu.
+    Setting,
 }
 
+/// Calculates the ui_scale.0 depending on the size of the main node
 pub fn change_scaling(mut ui_scale: ResMut<UiScale>, window: Query<&Window>) {
-    // Calculates the ui_scale depending on the size of the main node
     let window = window.single();
     let (a, b) = (
         window.resolution.width() / 1280.,
