@@ -4,6 +4,7 @@ use std::ops::{
     Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Rem, RemAssign, Sub, SubAssign,
 };
 
+use bevy::prelude::*;
 use paste::paste;
 
 /// Represents a number that can be used in calculations for hexagonal grids.
@@ -98,7 +99,7 @@ number_impl! {
 /// Represents a position in a hexagonal grid.
 /// We use the axial coordinate system explained in this
 /// [documentation](https://www.redblobgames.com/grids/hexagons/#coordinates).
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, Component)]
 pub struct HexPosition<T: Number>(pub T, pub T);
 
 /// All possible directions in a hexagonal grid.
@@ -233,8 +234,12 @@ impl<T: Number> Iterator for HexSpiral<T> {
 }
 
 impl<T: Number> HexPosition<T> {
+    /// Creates a new [HexPosition].
+    pub const fn new(x: T, y: T) -> Self {
+        Self(x, y)
+    }
+
     /// Converts the current [HexPosition] into a pixel coordinate.
-    /// Input: The size of the hexagon in pixels (witdh, height).
     ///
     /// If you want to learn more about pixel coordinates conversion,
     /// you can check the
@@ -243,21 +248,17 @@ impl<T: Number> HexPosition<T> {
     /// # Example
     ///
     /// ```no_run
+    /// use bevy::math::Vec2;
     /// use border_wars::map::hex::HexPosition;
     ///
     /// let position = HexPosition(1, 0);
-    /// assert_eq!(
-    ///     position.to_pixel_coordinates((1.0, 1.0)),
-    ///     (3f32.sqrt(), 0.0)
-    /// );
+    /// assert_eq!(position.to_pixel_coordinates(), (3f32.sqrt(), 0.0).into());
     /// ```
-    pub fn to_pixel_coordinates(&self, size: (f32, f32)) -> (f32, f32) {
-        (
-            size.0
-                * 3f32
-                    .sqrt()
-                    .mul_add(T::to_f32(self.0), 3f32.sqrt() / 2.0 * T::to_f32(self.1)),
-            size.1 * (3.0 / 2.0 * T::to_f32(self.1)),
+    pub fn to_pixel_coordinates(&self) -> Vec2 {
+        Vec2::new(
+            3f32.sqrt()
+                .mul_add(T::to_f32(self.0), 3f32.sqrt() / 2.0 * T::to_f32(self.1)),
+            3.0 / 2.0 * T::to_f32(self.1),
         )
     }
 
