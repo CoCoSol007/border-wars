@@ -10,3 +10,9 @@ missing_docs_in_private_items = "warn"
 unwrap_in_result = "warn"
 unwrap_used = "warn"
 nursery = "warn"
+
+[profile.dev]
+opt-level = 1
+
+[profile.dev.package."*"]
+opt-level = 3
