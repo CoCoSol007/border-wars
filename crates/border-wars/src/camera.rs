@@ -114,7 +114,7 @@ fn scale_system(
                 return;
             }
 
-            let future_scale = event.y.mul_add(scale_speed.0, projection.scale);
+            let future_scale = event.y.mul_add(-scale_speed.0, projection.scale);
             if min_scale.0 < future_scale && future_scale < max_scale.0 {
                 projection.scale = future_scale;
             }
