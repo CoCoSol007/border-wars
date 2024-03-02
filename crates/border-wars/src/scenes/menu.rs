@@ -11,14 +11,18 @@ impl Plugin for MenuPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, menu_ui.run_if(in_state(CurrentScene::Menu)));
         app.add_systems(Update, change_scaling);
-        app.add_systems(Update, handle_button);
+        app.add_systems(Update, hover_system);
+        app.add_systems(Update, pressed_system);
     }
 }
 
 /// TODO
 #[derive(Component, Clone)]
 struct HoveredTexture {
+    /// TODO
     texture: Handle<Image>,
+
+    /// TODO
     hovered_texture: Handle<Image>,
 }
 
@@ -36,10 +40,9 @@ fn menu_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
                 ..default()
             },
             z_index: ZIndex::Local(0),
-            background_color: Color::GREEN.into(),
             ..default()
         })
-        .with_children(|node| main_node(node));
+        .with_children(|child: &mut ChildBuilder| main_node(child, &asset_server));
 
     create_side_button(
         UiRect {
@@ -52,7 +55,7 @@ fn menu_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
         &mut commands,
         HoveredTexture {
             texture: asset_server.load("button_settings_icon.png"),
-            hovered_texture: asset_server.load("button_menu_icon.png"),
+            hovered_texture: asset_server.load("button_settings_icon_hover.png"),
         },
     );
 
@@ -67,7 +70,7 @@ fn menu_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
         &mut commands,
         HoveredTexture {
             texture: asset_server.load("button_menu_icon.png"),
-            hovered_texture: asset_server.load("button_settings_icon.png"),
+            hovered_texture: asset_server.load("button_menu_icon_hover.png"),
         },
     );
 }
@@ -87,52 +90,60 @@ fn create_side_button(
                 margin,
                 ..default()
             },
-            z_index: ZIndex::Local(1),
-            background_color: Color::NONE.into(),
+            z_index: ZIndex::Global(14),
+            image: textures.texture.clone().into(),
             ..default()
         })
-        .insert((target_scene, textures.clone()))
-        .with_children(|button| {
-            button.spawn(ImageBundle {
-                style: Style {
-                    width: Val::Percent(100.),
-                    height: Val::Percent(100.),
-                    ..default()
-                },
-                image: textures.texture.into(),
-                ..default()
-            });
-        });
+        .insert((target_scene, textures));
 }
 
-fn handle_button(
-    interaction_query: Query<
-        (&Interaction, &CurrentScene, &mut Children, &HoveredTexture),
-        (Changed<Interaction>, With<Button>),
-    >,
-    mut image_query: Query<&mut UiImage>,
+/// TODO
+fn create_button(
+    target_scene: CurrentScene,
+    commands: &mut ChildBuilder,
+    textures: HoveredTexture,
+) {
+    commands
+        .spawn(ButtonBundle {
+            style: Style {
+                width: Val::Px(266.),
+                height: Val::Px(70.),
+                margin: UiRect::all(Val::Auto),
+                ..default()
+            },
+            z_index: ZIndex::Global(1),
+            image: textures.texture.clone().into(),
+            ..default()
+        })
+        .insert((target_scene, textures));
+}
+
+/// TODO
+fn pressed_system(
+    interaction_query: Query<(&Interaction, &CurrentScene), (Changed<Interaction>, With<Button>)>,
     mut next_scene: ResMut<NextState<CurrentScene>>,
 ) {
-    for (interaction, target_scene, children, textures) in interaction_query.iter() {
-        match *interaction {
-            Interaction::Pressed => {
-                next_scene.set(*target_scene);
-            }
-            Interaction::Hovered => {
-                hover_system(children, &mut image_query, textures.texture.clone())
-            }
-            Interaction::None => hover_system(children, &mut image_query, textures.hovered_texture.clone()),
+    for (interaction, target_scene) in interaction_query.iter() {
+        if *interaction == Interaction::Pressed {
+            next_scene.set(*target_scene);
         }
     }
 }
 
+/// TODO
 fn hover_system(
-    children: &Children,
-    image_query: &mut Query<&mut UiImage>,
-    texture: Handle<Image>,
+    mut interaction_query: Query<
+        (&Interaction, &HoveredTexture, &mut UiImage),
+        Changed<Interaction>,
+    >,
 ) {
-    let mut image = image_query.get_mut(children[0]).unwrap();
-    image.texture = texture
+    for (interaction, textures, mut image) in interaction_query.iter_mut() {
+        match *interaction {
+            Interaction::Hovered => image.texture = textures.hovered_texture.clone(),
+            Interaction::None => image.texture = textures.texture.clone(),
+            Interaction::Pressed => (),
+        }
+    }
 }
 
 /// TODO
@@ -140,27 +151,27 @@ fn default_style() -> Style {
     Style {
         flex_direction: FlexDirection::Column,
         width: Val::Percent(100.),
-        height: Val::Percent(45.),
+        height: Val::Percent(55.),
         margin: UiRect::all(Val::Auto),
         ..default()
     }
 }
 
 /// TODO
-fn main_node(main_node: &mut ChildBuilder<'_, '_, '_>) {
-    main_node.spawn(NodeBundle {
+fn main_node(main_node: &mut ChildBuilder<'_, '_, '_>, asset_server: &Res<AssetServer>) {
+    main_node.spawn(ImageBundle {
         style: Style {
+            height: Val::Px(150.),
+            width: Val::Px(613.5),
             margin: UiRect {
-                left: (Val::Auto),
-                right: (Val::Auto),
-                top: (Val::Px(25.)),
-                bottom: (Val::Px(25.)),
+                left: Val::Auto,
+                right: Val::Auto,
+                top: Val::Px(25.),
+                bottom: Val::Px(50.),
             },
-            width: Val::Px(650.),
-            height: Val::Px(300.),
             ..default()
         },
-        background_color: BackgroundColor(Color::RED),
+        image: asset_server.load("bw.png").into(),
         ..default()
     });
 
@@ -174,8 +185,8 @@ fn main_node(main_node: &mut ChildBuilder<'_, '_, '_>) {
                     top: (Val::Auto),
                     bottom: (Val::Px(25.)),
                 },
-                width: Val::Px(552.5),
-                height: Val::Percent(70.),
+                width: Val::Px(500.),
+                height: Val::Percent(65.),
                 ..default()
             },
             ..default()
@@ -184,7 +195,6 @@ fn main_node(main_node: &mut ChildBuilder<'_, '_, '_>) {
             container
                 .spawn(NodeBundle {
                     style: default_style(),
-                    background_color: Color::YELLOW_GREEN.into(),
                     ..default()
                 })
                 .with_children(|host| {
@@ -193,17 +203,19 @@ fn main_node(main_node: &mut ChildBuilder<'_, '_, '_>) {
                         background_color: BackgroundColor(Color::YELLOW),
                         ..default()
                     });
-                    host.spawn(NodeBundle {
-                        style: default_style(),
-                        background_color: BackgroundColor(Color::YELLOW),
-                        ..default()
-                    });
+                    create_button(
+                        CurrentScene::Lobby,
+                        host,
+                        HoveredTexture {
+                            texture: asset_server.load("host.png"),
+                            hovered_texture: asset_server.load("host.png"),
+                        },
+                    )
                 });
 
             container
                 .spawn(NodeBundle {
                     style: default_style(),
-                    background_color: Color::YELLOW_GREEN.into(),
                     ..default()
                 })
                 .with_children(|join| {
@@ -212,11 +224,14 @@ fn main_node(main_node: &mut ChildBuilder<'_, '_, '_>) {
                         background_color: BackgroundColor(Color::YELLOW),
                         ..default()
                     });
-                    join.spawn(NodeBundle {
-                        style: default_style(),
-                        background_color: BackgroundColor(Color::YELLOW),
-                        ..default()
-                    });
+                    create_button(
+                        CurrentScene::Lobby,
+                        join,
+                        HoveredTexture {
+                            texture: asset_server.load("join.png"),
+                            hovered_texture: asset_server.load("join.png"),
+                        },
+                    )
                 });
         });
 }

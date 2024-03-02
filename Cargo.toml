@@ -6,6 +6,7 @@ resolver = "2"
 missing_docs = "warn"
 
 [workspace.lints.clippy]
+type_complexity = "allow"
 missing_docs_in_private_items = "warn"
 unwrap_in_result = "warn"
 unwrap_used = "warn"
