@@ -9,10 +9,11 @@ pub struct MenuPlugin;
 
 impl Plugin for MenuPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, menu_ui.run_if(in_state(CurrentScene::Menu)));
+        app.add_systems(OnEnter(CurrentScene::Menu), menu_ui);
         app.add_systems(Update, change_scaling);
         app.add_systems(Update, hover_system);
         app.add_systems(Update, pressed_system);
+        app.add_systems(OnExit(CurrentScene::Menu), destroy_menu);
     }
 }
 
@@ -25,6 +26,10 @@ struct HoveredTexture {
     /// TODO
     hovered_texture: Handle<Image>,
 }
+
+/// TODO
+#[derive(Component)]
+struct MenuEntity;
 
 /// Display the UI of the menu to host a game or join one.
 fn menu_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
@@ -42,6 +47,7 @@ fn menu_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
             z_index: ZIndex::Local(0),
             ..default()
         })
+        .insert(MenuEntity)
         .with_children(|child: &mut ChildBuilder| main_node(child, &asset_server));
 
     create_side_button(
@@ -51,7 +57,7 @@ fn menu_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
             top: Val::Px(25.),
             bottom: Val::Auto,
         },
-        CurrentScene::Lobby,
+        CurrentScene::Setting,
         &mut commands,
         HoveredTexture {
             texture: asset_server.load("button_settings_icon.png"),
@@ -94,7 +100,7 @@ fn create_side_button(
             image: textures.texture.clone().into(),
             ..default()
         })
-        .insert((target_scene, textures));
+        .insert((target_scene, textures, MenuEntity));
 }
 
 /// TODO
@@ -115,7 +121,7 @@ fn create_button(
             image: textures.texture.clone().into(),
             ..default()
         })
-        .insert((target_scene, textures));
+        .insert((target_scene, textures, MenuEntity));
 }
 
 /// TODO
@@ -159,21 +165,23 @@ fn default_style() -> Style {
 
 /// TODO
 fn main_node(main_node: &mut ChildBuilder<'_, '_, '_>, asset_server: &Res<AssetServer>) {
-    main_node.spawn(ImageBundle {
-        style: Style {
-            height: Val::Px(150.),
-            width: Val::Px(613.5),
-            margin: UiRect {
-                left: Val::Auto,
-                right: Val::Auto,
-                top: Val::Px(25.),
-                bottom: Val::Px(50.),
+    main_node
+        .spawn(ImageBundle {
+            style: Style {
+                height: Val::Px(150.),
+                width: Val::Px(613.5),
+                margin: UiRect {
+                    left: Val::Auto,
+                    right: Val::Auto,
+                    top: Val::Px(25.),
+                    bottom: Val::Px(50.),
+                },
+                ..default()
             },
+            image: asset_server.load("bw.png").into(),
             ..default()
-        },
-        image: asset_server.load("bw.png").into(),
-        ..default()
-    });
+        })
+        .insert(MenuEntity);
 
     main_node
         .spawn(NodeBundle {
@@ -197,12 +205,14 @@ fn main_node(main_node: &mut ChildBuilder<'_, '_, '_>, asset_server: &Res<AssetS
                     style: default_style(),
                     ..default()
                 })
+                .insert(MenuEntity)
                 .with_children(|host| {
                     host.spawn(NodeBundle {
                         style: default_style(),
                         background_color: BackgroundColor(Color::YELLOW),
                         ..default()
-                    });
+                    })
+                    .insert(MenuEntity);
                     create_button(
                         CurrentScene::Lobby,
                         host,
@@ -218,12 +228,14 @@ fn main_node(main_node: &mut ChildBuilder<'_, '_, '_>, asset_server: &Res<AssetS
                     style: default_style(),
                     ..default()
                 })
+                .insert(MenuEntity)
                 .with_children(|join| {
                     join.spawn(NodeBundle {
                         style: default_style(),
                         background_color: BackgroundColor(Color::YELLOW),
                         ..default()
-                    });
+                    })
+                    .insert(MenuEntity);
                     create_button(
                         CurrentScene::Lobby,
                         join,
@@ -234,4 +246,11 @@ fn main_node(main_node: &mut ChildBuilder<'_, '_, '_>, asset_server: &Res<AssetS
                     )
                 });
         });
+}
+
+/// TODO
+fn destroy_menu(mut commands: Commands, query: Query<Entity, With<MenuEntity>>) {
+    for entity in query.iter() {
+        commands.entity(entity).despawn_recursive();
+    }
 }

@@ -3,7 +3,7 @@
 use bevy::prelude::*;
 use bevy_egui::EguiPlugin;
 
-use crate::CurrentScene;
+use crate::{change_scaling, CurrentScene};
 
 pub mod lobby;
 pub mod menu;
@@ -16,6 +16,7 @@ impl Plugin for ScenesPlugin {
         app.add_plugins(EguiPlugin)
             .add_state::<CurrentScene>()
             .add_plugins(menu::MenuPlugin)
-            .add_plugins(lobby::LobbyPlugin);
+            .add_plugins(lobby::LobbyPlugin)
+            .add_systems(Update, change_scaling);
     }
 }
