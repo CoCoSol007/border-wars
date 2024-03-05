@@ -2,6 +2,7 @@
 
 pub mod generation;
 pub mod hex;
+pub mod renderer;
 
 use bevy::prelude::*;
 
