@@ -1,5 +1,6 @@
 //! Contains all the logic related to the map.
 
+pub mod click_tile;
 pub mod generation;
 pub mod hex;
 pub mod renderer;

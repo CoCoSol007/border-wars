@@ -40,7 +40,7 @@ impl Tile {
     ///
     /// TODO: we are currently using temporary images that will modify
     /// this function in the future.
-    const fn get_image_size(&self) -> Vec2 {
+    pub const fn get_image_size(&self) -> Vec2 {
         match self {
             Self::Grass => Vec2 { x: 184.0, y: 164.0 },
             Self::Forest => Vec2 { x: 184.0, y: 138.0 },
