@@ -43,7 +43,7 @@ Our team consists of :
 - [CoCo_Sol](https://github.com/cocosol007): Owner of this project and the main developper
 - [Raphaël](https://git.tipragot.fr/raphael): Owner of this project and game designer
 - [Tipragot](https://git.tipragot.fr/tipragot): Main reviewer
-- [Arthur](https://www.instagram.com/tuturdu32): Compositeur
+- [Arthur](https://www.instagram.com/tuturdu32): Composer
 - [Racloody](https://linktr.ee/racloody): Sound designer and chief communications officer
 - [Horoleysh](https://instagram.com/horoleysh): Artist
 

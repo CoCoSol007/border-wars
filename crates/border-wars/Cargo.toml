@@ -13,3 +13,5 @@ workspace = true
 [dependencies]
 bevy = { version = "0.12.1", features = ["dynamic_linking"] }
 bevy_egui = "0.24.0"
+noise = "0.8.2"
+paste = "1.0.14"

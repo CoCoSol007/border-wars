@@ -248,7 +248,7 @@ fn main_node(main_node: &mut ChildBuilder<'_, '_, '_>, asset_server: &Res<AssetS
         });
 }
 
-/// TODO
+/// The function that destroys the menu.
 fn destroy_menu(mut commands: Commands, query: Query<Entity, With<MenuEntity>>) {
     for entity in query.iter() {
         commands.entity(entity).despawn_recursive();
