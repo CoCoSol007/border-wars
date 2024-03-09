@@ -12,21 +12,21 @@ impl Plugin for ResponsiveScalingPlugin {
     }
 }
 
-/// The default window size.
+/// The default ui layout size.
 #[derive(Resource)]
-pub struct WindowSize(pub Vec2);
+pub struct UILayoutSize(pub Vec2);
 
-/// Initializes the window size.
+/// Initializes [UILayoutSize].
 pub fn init_window_size(mut command: Commands) {
-    command.insert_resource(WindowSize(Vec2::new(1280., 720.)));
+    command.insert_resource(UILayoutSize(Vec2::new(1280., 720.)));
 }
 
-/// Calculates the ui_scale.0 depending on the default screen size
-/// in order to make the screen responsive.
+/// Calculates the ui_scale.0 depending on the [UILayoutSize]
+/// in order to make the ui layout responsive.
 pub fn change_scaling(
     mut ui_scale: ResMut<UiScale>,
     windows: Query<&Window>,
-    size: Res<WindowSize>,
+    size: Res<UILayoutSize>,
 ) {
     let window = windows.get_single().expect("Main window not found");
     let (a, b) = (
