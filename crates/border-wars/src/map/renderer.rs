@@ -14,7 +14,8 @@ impl Plugin for RendererPlugin {
             .add_systems(
                 Update,
                 render_map.run_if(in_state(crate::CurrentScene::Game)),
-            );
+            )
+            .insert_resource(ClearColor(Color::rgb_u8(129, 212, 250)));
     }
 }
 
