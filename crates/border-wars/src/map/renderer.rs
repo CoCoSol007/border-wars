@@ -42,25 +42,16 @@ impl Tile {
     /// this function in the future.
     const fn get_image_size(&self) -> Vec2 {
         match self {
-            Self::Grass => Vec2 {
-                x: 1250.0,
-                y: 1000.0,
-            },
-            Self::Forest => Vec2 {
-                x: 1250.0,
-                y: 1000.0,
-            },
-            Self::Hill => Vec2 {
-                x: 1250.0,
-                y: 1300.0,
-            },
+            Self::Grass => Vec2 { x: 184.0, y: 164.0 },
+            Self::Forest => Vec2 { x: 184.0, y: 138.0 },
+            Self::Hill => Vec2 { x: 184.0, y: 181.0 },
         }
     }
 }
 
 /// Init resources related to the rendering of the map.
 fn init_resources_for_rendering(mut commands: Commands) {
-    commands.insert_resource(TilesGap(Vec2 { x: 70., y: 40. }));
+    commands.insert_resource(TilesGap(Vec2 { x: 70., y: 35. }));
     commands.insert_resource(TilesSize(Vec2 { x: 125., y: 100. }))
 }
 
