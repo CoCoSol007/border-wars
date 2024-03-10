@@ -33,7 +33,6 @@ struct MenuEntity;
 
 /// Display the UI of the menu to host a game or join one.
 fn menu_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
-    commands.spawn(Camera2dBundle::default());
 
     commands
         .spawn(NodeBundle {
@@ -237,7 +236,7 @@ fn main_node(main_node: &mut ChildBuilder<'_, '_, '_>, asset_server: &Res<AssetS
                     })
                     .insert(MenuEntity);
                     create_button(
-                        CurrentScene::Lobby,
+                        CurrentScene::Game,
                         join,
                         HoveredTexture {
                             texture: asset_server.load("join.png"),
