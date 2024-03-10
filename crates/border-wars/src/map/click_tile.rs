@@ -2,6 +2,7 @@
 
 use bevy::prelude::*;
 
+use super::renderer::TilesGap;
 use super::Tile;
 
 /// The event that is triggered when a tile is clicked.
@@ -78,20 +79,25 @@ fn select_closest_tile(
     tiles: Query<(Entity, &Transform, &Tile)>,
     mut click_event_reader: EventReader<ClickOnTheWorld>,
     mut clicked_tile_event_writer: EventWriter<TileJustClicked>,
+    gap_tiles: Res<TilesGap>,
 ) {
     for click_event in click_event_reader.read() {
         // The closest tile and its distance to the cursor.
         let mut closest_entity: Option<Entity> = None;
         let mut closest_position: Option<f32> = None;
 
+        // To keep the aspect ratio.
+        let click_position = click_event.0 / gap_tiles.0;
+
         for (tile_entity, tile_transform, tile_type) in tiles.iter() {
-            let mut tile_position = tile_transform.translation.truncate();
             let tile_size = tile_type.get_image_size();
             let tile_scale = tile_transform.scale.truncate();
 
-            tile_position += (tile_size / 2.0) * tile_scale;
+            let mut tile_position = tile_transform.translation.truncate() / gap_tiles.0;
+            // The origine of the tile is the bottom center.
+            tile_position.y += (tile_size.y / 2.0) * tile_scale.y / gap_tiles.0.y;
 
-            let distance_to_cursor = tile_position.distance(click_event.0);
+            let distance_to_cursor = tile_position.distance(click_position);
 
             if closest_position.is_none() || closest_position > Some(distance_to_cursor) {
                 closest_entity = Some(tile_entity);
