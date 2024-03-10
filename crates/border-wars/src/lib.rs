@@ -5,6 +5,7 @@ use bevy::prelude::*;
 pub mod camera;
 pub mod map;
 pub mod scenes;
+pub mod ui;
 
 /// The current scene of the game.
 #[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash, States)]

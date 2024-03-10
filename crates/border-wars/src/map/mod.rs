@@ -13,7 +13,7 @@ use self::hex::*;
 pub type TilePosition = HexPosition<i32>;
 
 /// The tile of the map.
-#[derive(Component, Debug)]
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Tile {
     /// The hill tile.
     Hill,

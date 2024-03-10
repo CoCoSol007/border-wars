@@ -1,6 +1,6 @@
 //! All programs related to the clicking on a tile.
 
-use bevy::prelude::*;
+use bevy::{input::mouse::MouseButtonInput, prelude::*};
 
 use super::Tile;
 
@@ -36,14 +36,18 @@ impl Plugin for TilesClickable {
 /// Handles the mouse click and gets the position of the cursor in the world.
 /// Finally, it sends an event with the position of the cursor.
 fn mouse_handler(
-    mouse_button_input: Res<Input<MouseButton>>,
+    mut mouse_button_event: EventReader<MouseButtonInput>,
     windows: Query<&Window>,
     cameras: Query<(&Camera, &GlobalTransform)>,
     mut events_writer: EventWriter<ClickOnTheWorld>,
     not_clickable_zones: Query<(&Node, &GlobalTransform), With<ZoneNotClickable>>,
     ui_scale: Res<UiScale>,
 ) {
-    if !mouse_button_input.just_pressed(MouseButton::Left) {
+    let Some(event) = mouse_button_event.read().next() else {
+            return;
+    };
+
+    if !(event.state.is_pressed() && event.button == MouseButton::Left) {
         return;
     }
 
