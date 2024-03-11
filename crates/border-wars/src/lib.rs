@@ -4,6 +4,7 @@ use bevy::prelude::*;
 
 pub mod camera;
 pub mod map;
+pub mod responsive_scale;
 pub mod scenes;
 pub mod ui;
 
