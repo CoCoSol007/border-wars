@@ -2,6 +2,7 @@
 
 use bevy::prelude::*;
 
+use super::{create_main_uui_node, MainNode};
 use crate::map::click_tile::TileJustClicked;
 use crate::map::Tile;
 
@@ -13,7 +14,8 @@ impl Plugin for TilesInfoPlugin {
         app.add_systems(Update, handle_tile_click)
             .init_resource::<SelectedTile>()
             .add_systems(Update, update_tile_info_text)
-            .add_systems(OnEnter(crate::CurrentScene::Game), init_text_zone);
+            .add_systems(OnEnter(crate::CurrentScene::Game), init_text_zone)
+            .add_systems(Startup, create_main_uui_node);
     }
 }
 
@@ -68,48 +70,70 @@ fn handle_tile_click(
     }
 }
 
-fn init_text_zone(mut commands: Commands, asset_server: Res<AssetServer>) {
-    commands
-        .spawn(ImageBundle {
-            style: Style {
-                position_type: PositionType::Absolute,
-                height: Val::Percent(50.),
-                width: Val::Percent(50.),
-                bottom: Val::ZERO,
-                ..Default::default()
-            },
+fn init_text_zone(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    main_nodes: Query<Entity, With<MainNode>>,
+) {
+    let main_node = main_nodes.single();
 
-            image: UiImage {
-                texture: asset_server.load("temp.png"),
-                ..default()
-            },
-            ..default()
-        })
-        .with_children(|builder| {
-            builder
-                .spawn(TextBundle {
-                    style: Style {
-                        height:Val::Percent(100.),
-                        position_type: PositionType::Absolute,
+    commands.entity(main_node).with_children(|parent| {
+        parent
+            .spawn(ImageBundle {
+                style: Style {
+                    position_type: PositionType::Absolute,
+
+                    bottom: Val::ZERO,
+                    margin: UiRect {
+                        left: Val::Auto,
+                        right: Val::Auto,
                         ..default()
                     },
+
+                    width: Val::Percent(50.0),
+                    height: Val::Px(100.),
+                    ..Default::default()
+                },
+
+                image: UiImage {
+                    texture: asset_server.load("temp.png"),
                     ..default()
-                })
-                .insert(TileInfoText);
-        });
+                },
+                ..default()
+            }).insert(TileInfoBox)
+            .with_children(|builder| {
+                builder
+                    .spawn(TextBundle {
+                        style: Style {
+                            height: Val::Percent(100.),
+                            position_type: PositionType::Absolute,
+                            ..default()
+                        },
+                        ..default()
+                    })
+                    .insert(TileInfoText);
+            });
+    });
 }
 
 /// TODO
 #[derive(Component)]
 pub struct TileInfoText;
 
+/// TODO
+#[derive(Component)]
+pub struct TileInfoBox;
+
 fn update_tile_info_text(
-    mut query: Query<(&mut Transform, &mut Text, &mut Visibility), With<TileInfoText>>,
+    mut query: Query<(&mut Transform, &mut Text), With<TileInfoText>>,
     selected: Res<SelectedTile>,
+    mut main_nodes: Query<&mut Transform, With<TileInfoBox>>,
 ) {
-    for (mut transform, mut text, mut visibility) in query.iter_mut() {
+    let mut info_box = main_nodes.single_mut();
+    for (mut transform, mut text) in query.iter_mut() {
         if selected.index().is_none() {
-            *visibility = Visibility::Hidden;
+            info_box.translation.y = -100.0;
+            text.sections = vec![];
             return;
         }
         if let SelectedTile::Tile(tile, _) = *selected {
@@ -121,19 +145,7 @@ fn update_tile_info_text(
                     ..default()
                 },
             }];
-            *visibility = Visibility::Visible;
             transform.translation.z = 1.0;
         }
     }
 }
-
-// .spawn(TextBundle {
-// style: Style {
-// position_type: PositionType::Absolute,
-//
-// ..default()
-// },
-//
-// ..default()
-// })
-// .insert(TileInfoText);
