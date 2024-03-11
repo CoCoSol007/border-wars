@@ -22,6 +22,28 @@ struct ClickOnTheWorld(Vec2);
 #[derive(Component)]
 pub struct ZoneNotClickable;
 
+/// The currently selected tile.
+#[derive(Resource, Default, Debug)]
+pub enum SelectedTile {
+    /// The index (ID) of the selected tile.
+    Tile(u32),
+
+    /// Any tile is selected.
+    #[default]
+    None,
+}
+
+impl SelectedTile {
+    /// Returns the index (ID) of the selected tile.
+    /// Returns `None` if no tile is selected.
+    pub fn index(&self) -> Option<u32> {
+        match self {
+            SelectedTile::Tile(index) => Some(*index),
+            SelectedTile::None => None,
+        }
+    }
+}
+
 /// A plugin that handles the selection of tiles.
 pub struct TilesClickable;
 
@@ -30,7 +52,8 @@ impl Plugin for TilesClickable {
         app.add_systems(PreUpdate, mouse_handler)
             .add_systems(PreUpdate, select_closest_tile)
             .add_event::<ClickOnTheWorld>()
-            .add_event::<TileJustClicked>();
+            .add_event::<TileJustClicked>()
+            .init_resource::<SelectedTile>();
     }
 }
 
@@ -79,7 +102,8 @@ fn select_closest_tile(
     tiles: Query<(Entity, &Transform, &Tile)>,
     mut click_event_reader: EventReader<ClickOnTheWorld>,
     mut clicked_tile_event_writer: EventWriter<TileJustClicked>,
-    gap_tiles: Res<TilesGap>,
+    tile_gap: Res<TilesGap>,
+    mut selected_tile: ResMut<SelectedTile>,
 ) {
     for click_event in click_event_reader.read() {
         // The closest tile and its distance to the cursor.
@@ -87,15 +111,15 @@ fn select_closest_tile(
         let mut closest_position: Option<f32> = None;
 
         // To keep the aspect ratio.
-        let click_position = click_event.0 / gap_tiles.0;
+        let click_position = click_event.0 / tile_gap.0;
 
         for (tile_entity, tile_transform, tile_type) in tiles.iter() {
             let tile_size = tile_type.get_image_size();
             let tile_scale = tile_transform.scale.truncate();
 
-            let mut tile_position = tile_transform.translation.truncate() / gap_tiles.0;
+            let mut tile_position = tile_transform.translation.truncate() / tile_gap.0;
             // The origine of the tile is the bottom center.
-            tile_position.y += (tile_size.y / 2.0) * tile_scale.y / gap_tiles.0.y;
+            tile_position.y += (tile_size.y / 2.0) * tile_scale.y / tile_gap.0.y;
 
             let distance_to_cursor = tile_position.distance(click_position);
 
@@ -105,7 +129,13 @@ fn select_closest_tile(
             }
         }
         if let Some(tile_entity) = closest_entity {
-            clicked_tile_event_writer.send(TileJustClicked(tile_entity.index()));
+            let entity_index = tile_entity.index();
+            clicked_tile_event_writer.send(TileJustClicked(entity_index));
+            if selected_tile.index() == Some(entity_index) {
+                *selected_tile = SelectedTile::None;
+            } else {
+                *selected_tile = SelectedTile::Tile(entity_index);
+            }
         }
     }
 }
