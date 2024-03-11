@@ -3,6 +3,7 @@
 use bevy::prelude::*;
 use border_wars::camera::CameraPlugin;
 use border_wars::map::renderer::RendererPlugin;
+use border_wars::map::selected_tile::SelectTilePlugin;
 use border_wars::scenes::ScenesPlugin;
 
 fn main() {
@@ -11,5 +12,6 @@ fn main() {
         .add_plugins(ScenesPlugin)
         .add_plugins(RendererPlugin)
         .add_plugins(CameraPlugin)
+        .add_plugins(SelectTilePlugin) 
         .run();
 }
