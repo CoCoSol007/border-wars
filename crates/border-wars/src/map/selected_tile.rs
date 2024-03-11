@@ -36,10 +36,10 @@ pub enum SelectedTile {
 impl SelectedTile {
     /// Returns the index (ID) of the selected tile.
     /// Returns `None` if no tile is selected.
-    pub fn index(&self) -> Option<u32> {
+    pub const fn index(&self) -> Option<u32> {
         match self {
-            SelectedTile::Tile(index) => Some(*index),
-            SelectedTile::None => None,
+            Self::Tile(index) => Some(*index),
+            Self::None => None,
         }
     }
 }
