@@ -65,21 +65,38 @@ fn handle_tile_click(
                 transform.translation.y += 10.;
             }
         }
-
     }
 }
 
-fn init_text_zone(mut commands: Commands) {
+fn init_text_zone(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
-        .spawn(TextBundle {
+        .spawn(ImageBundle {
             style: Style {
                 position_type: PositionType::Absolute,
+                height: Val::Percent(50.),
+                width: Val::Percent(50.),
+                bottom: Val::ZERO,
+                ..Default::default()
+            },
 
+            image: UiImage {
+                texture: asset_server.load("temp.png"),
                 ..default()
             },
             ..default()
         })
-        .insert(TileInfoText);
+        .with_children(|builder| {
+            builder
+                .spawn(TextBundle {
+                    style: Style {
+                        height:Val::Percent(100.),
+                        position_type: PositionType::Absolute,
+                        ..default()
+                    },
+                    ..default()
+                })
+                .insert(TileInfoText);
+        });
 }
 
 /// TODO
@@ -109,3 +126,14 @@ fn update_tile_info_text(
         }
     }
 }
+
+// .spawn(TextBundle {
+// style: Style {
+// position_type: PositionType::Absolute,
+//
+// ..default()
+// },
+//
+// ..default()
+// })
+// .insert(TileInfoText);

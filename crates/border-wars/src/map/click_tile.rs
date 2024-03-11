@@ -1,6 +1,7 @@
 //! All programs related to the clicking on a tile.
 
-use bevy::{input::mouse::MouseButtonInput, prelude::*};
+use bevy::input::mouse::MouseButtonInput;
+use bevy::prelude::*;
 
 use super::Tile;
 
@@ -44,7 +45,7 @@ fn mouse_handler(
     ui_scale: Res<UiScale>,
 ) {
     let Some(event) = mouse_button_event.read().next() else {
-            return;
+        return;
     };
 
     if !(event.state.is_pressed() && event.button == MouseButton::Left) {
