@@ -1,4 +1,4 @@
-//! All programs related to the clicking on a tile.
+//! All programs related to the selection of a tile.
 
 use bevy::prelude::*;
 
@@ -45,9 +45,9 @@ impl SelectedTile {
 }
 
 /// A plugin that handles the selection of tiles.
-pub struct TilesClickable;
+pub struct SelectTilePlugin;
 
-impl Plugin for TilesClickable {
+impl Plugin for SelectTilePlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(PreUpdate, mouse_handler)
             .add_systems(PreUpdate, select_closest_tile)
@@ -97,7 +97,7 @@ fn mouse_handler(
     events_writer.send(ClickOnTheWorld(cursor_position_in_world));
 }
 
-/// Get the closest tile to the cursor and send it in an event.
+/// Get the closest tile to the cursor, send it in an event and select it.
 fn select_closest_tile(
     tiles: Query<(Entity, &Transform, &Tile)>,
     mut click_event_reader: EventReader<ClickOnTheWorld>,

@@ -2,9 +2,7 @@
 
 use bevy::prelude::*;
 use border_wars::camera::CameraPlugin;
-use border_wars::map::generation::{MapGenerationPlugin, StartMapGeneration};
 use border_wars::map::renderer::RendererPlugin;
-use border_wars::map::selected_tile::TilesClickable;
 use border_wars::scenes::ScenesPlugin;
 
 fn main() {
@@ -13,15 +11,5 @@ fn main() {
         .add_plugins(ScenesPlugin)
         .add_plugins(RendererPlugin)
         .add_plugins(CameraPlugin)
-        .add_plugins(TilesClickable)
-        .add_plugins(MapGenerationPlugin)
-        .add_systems(OnEnter(border_wars::CurrentScene::Game), start)
         .run();
-}
-
-fn start(mut event: EventWriter<StartMapGeneration>) {
-    event.send(StartMapGeneration {
-        seed: 0,
-        radius: 10,
-    });
 }
