@@ -12,6 +12,6 @@ fn main() {
         .add_plugins(ScenesPlugin)
         .add_plugins(RendererPlugin)
         .add_plugins(CameraPlugin)
-        .add_plugins(SelectTilePlugin) 
+        .add_plugins(SelectTilePlugin)
         .run();
 }
