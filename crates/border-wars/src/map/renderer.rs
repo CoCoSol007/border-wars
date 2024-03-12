@@ -30,11 +30,7 @@ struct TilesSize(Vec2);
 impl Tile {
     /// Returns the handle of the image of the tile.
     fn get_texture(&self, asset_server: &AssetServer) -> Handle<Image> {
-        match self {
-            Self::Grass => asset_server.load("tiles/grass.png"),
-            Self::Forest => asset_server.load("tiles/forest.png"),
-            Self::Hill => asset_server.load("tiles/hill.png"),
-        }
+        asset_server.load(format!("tiles/{}.png", self.to_text()))
     }
 
     /// Returns the size of the image of the tile.
@@ -43,9 +39,17 @@ impl Tile {
     /// this function in the future.
     pub const fn get_image_size(&self) -> Vec2 {
         match self {
-            Self::Grass => Vec2 { x: 184.0, y: 164.0 },
-            Self::Forest => Vec2 { x: 184.0, y: 138.0 },
-            Self::Hill => Vec2 { x: 184.0, y: 181.0 },
+            Self::Breeding => Vec2::new(184., 158.),
+            Self::Casern => Vec2::new(184., 167.),
+            Self::Castle => Vec2::new(192., 196.),
+            Self::Forest => Vec2::new(184., 165.),
+            Self::Grass => Vec2::new(184., 138.),
+            Self::Hill => Vec2::new(184., 181.),
+            Self::Mine => Vec2::new(184., 166.),
+            Self::Outpost => Vec2::new(184., 208.),
+            Self::Sawmill => Vec2::new(184., 138.),
+            Self::Tower => Vec2::new(184., 218.),
+            Self::Wall => Vec2::new(184., 186.),
         }
     }
 }
