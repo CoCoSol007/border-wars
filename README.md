@@ -13,6 +13,8 @@ If you want to know more about our reflexions check this : [all brainstorms](doc
 
 ## 2. Building
 
+for more details check : [actions](docs/actions.md)
+
 - **Upgradeable Buildings**: Structures such as the Castle, Barracks, Outpost, Mines, Sawmills, Breeding Farms, and Towers can be upgraded to enhance their capabilities. If you want to see each upgrade of each buildings, check the [second brainstrom](docs/brainstorms/brainstorm2.md#building)
 - **Destruction and Construction**: Players can gain resources and build their own structures within their territory with a limited number of workers.
 - **Usage of Buildings**: Each building serves a specific purpose, from troop recruitment to resource generation. Players must manage their buildings efficiently to strengthen their kingdom. If you want to see each usage of each buildings, check the [second brainstrom](docs/brainstorms/brainstorm2.md#building)
