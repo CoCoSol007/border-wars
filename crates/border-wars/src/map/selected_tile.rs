@@ -5,11 +5,6 @@ use bevy::prelude::*;
 use super::renderer::TilesGap;
 use super::Tile;
 
-/// The event that is triggered when a tile is clicked.
-///
-/// The event contains the entity of the clicked tile.
-#[derive(Event)]
-pub struct TileJustClicked(pub Entity);
 
 /// An event that is triggered when a mouse button is clicked.
 ///
@@ -52,7 +47,6 @@ impl Plugin for SelectTilePlugin {
         app.add_systems(PreUpdate, mouse_handler)
             .add_systems(PreUpdate, select_closest_tile)
             .add_event::<ClickOnTheWorld>()
-            .add_event::<TileJustClicked>()
             .init_resource::<SelectedTile>();
     }
 }
@@ -101,7 +95,6 @@ fn mouse_handler(
 fn select_closest_tile(
     tiles: Query<(Entity, &Transform, &Tile)>,
     mut click_event_reader: EventReader<ClickOnTheWorld>,
-    mut clicked_tile_event_writer: EventWriter<TileJustClicked>,
     tile_gap: Res<TilesGap>,
     mut current_entity: ResMut<SelectedTile>,
 ) {
@@ -129,7 +122,6 @@ fn select_closest_tile(
             }
         }
         if let Some(tile_entity) = closest_entity {
-            clicked_tile_event_writer.send(TileJustClicked(tile_entity.clone()));
             if current_entity.get_entity() == Some(tile_entity) {
                 *current_entity = SelectedTile::None;
             } else {
