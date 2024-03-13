@@ -28,7 +28,7 @@ pub enum SelectedTile {
     /// The index (ID) of the selected tile.
     Tile(u32),
 
-    /// Any tile is selected.
+    /// Zero tile selected.
     #[default]
     None,
 }
