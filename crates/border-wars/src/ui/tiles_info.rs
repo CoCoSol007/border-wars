@@ -3,7 +3,7 @@
 use bevy::prelude::*;
 
 use super::{create_main_uui_node, MainNode};
-use crate::map::click_tile::TileJustClicked;
+use crate::map::selected_tile::SelectedTile;
 use crate::map::Tile;
 
 /// TODO
@@ -11,9 +11,11 @@ pub struct TilesInfoPlugin;
 
 impl Plugin for TilesInfoPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, handle_tile_click)
-            .init_resource::<SelectedTile>()
-            .add_systems(Update, update_tile_info_text)
+        app.init_resource::<SelectedTile>()
+            .add_systems(
+                Update,
+                update_tile_info_text.run_if(in_state(crate::CurrentScene::Game)),
+            )
             .add_systems(OnEnter(crate::CurrentScene::Game), init_text_zone)
             .add_systems(Startup, create_main_uui_node);
     }
@@ -25,47 +27,6 @@ impl Tile {
             Tile::Hill => "This is a hill".to_string(),
             Tile::Grass => "This is grass".to_string(),
             Tile::Forest => "This is a forest".to_string(),
-        }
-    }
-}
-
-#[derive(Resource, Default)]
-enum SelectedTile {
-    Tile(Tile, u32),
-    #[default]
-    None,
-}
-
-impl SelectedTile {
-    fn index(&self) -> Option<u32> {
-        match self {
-            SelectedTile::Tile(_, index) => Some(*index),
-            SelectedTile::None => None,
-        }
-    }
-}
-
-fn handle_tile_click(
-    mut event: EventReader<TileJustClicked>,
-    mut query: Query<(&Tile, Entity, &mut Transform)>,
-    mut selected: ResMut<SelectedTile>,
-) {
-    if let Some(event) = event.read().last() {
-        let save_selected = selected.index();
-        for (_, entity, mut transform) in query.iter_mut() {
-            if selected.index() == Some(entity.index()) {
-                if event.0 == entity.index() {
-                    *selected = SelectedTile::None;
-                }
-                transform.translation.y -= 10.;
-            }
-        }
-
-        for (tile, entity, mut transform) in query.iter_mut() {
-            if event.0 == entity.index() && save_selected != Some(event.0) {
-                *selected = SelectedTile::Tile(*tile, entity.index());
-                transform.translation.y += 10.;
-            }
         }
     }
 }
@@ -100,15 +61,16 @@ fn init_text_zone(
                     ..default()
                 },
                 ..default()
-            }).insert(TileInfoBox)
+            })
+            .insert(TileInfoBox)
             .with_children(|builder| {
                 builder
                     .spawn(TextBundle {
                         style: Style {
                             height: Val::Percent(100.),
-                            position_type: PositionType::Absolute,
                             ..default()
                         },
+                        z_index: bevy::prelude::ZIndex::Global(10),
                         ..default()
                     })
                     .insert(TileInfoText);
@@ -125,27 +87,22 @@ pub struct TileInfoText;
 pub struct TileInfoBox;
 
 fn update_tile_info_text(
-    mut query: Query<(&mut Transform, &mut Text), With<TileInfoText>>,
+    mut textes_info: Query<&mut Text, With<TileInfoText>>,
     selected: Res<SelectedTile>,
-    mut main_nodes: Query<&mut Transform, With<TileInfoBox>>,
+    tiles: Query<&Tile>,
 ) {
-    let mut info_box = main_nodes.single_mut();
-    for (mut transform, mut text) in query.iter_mut() {
-        if selected.index().is_none() {
-            info_box.translation.y = -100.0;
-            text.sections = vec![];
+    let mut text_info = textes_info.single_mut();
+    if let SelectedTile::Tile(tile) = *selected {
+        let Ok(tile) = tiles.get(tile) else {
             return;
-        }
-        if let SelectedTile::Tile(tile, _) = *selected {
-            text.sections = vec![TextSection {
-                value: tile.get_info_text(),
-                style: TextStyle {
-                    font_size: 20.0,
-                    color: Color::WHITE,
-                    ..default()
-                },
-            }];
-            transform.translation.z = 1.0;
-        }
+        };
+        text_info.sections = vec![TextSection {
+            value: tile.get_info_text(),
+            style: TextStyle {
+                font_size: 20.0,
+                color: Color::WHITE,
+                ..default()
+            },
+        }];
     }
 }
