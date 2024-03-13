@@ -7,9 +7,9 @@ use super::Tile;
 
 /// The event that is triggered when a tile is clicked.
 ///
-/// The event contains the index (ID) of the clicked tile.
+/// The event contains the entity of the clicked tile.
 #[derive(Event)]
-pub struct TileJustClicked(pub u32);
+pub struct TileJustClicked(pub Entity);
 
 /// An event that is triggered when a mouse button is clicked.
 ///
@@ -25,8 +25,8 @@ pub struct ZoneNotClickable;
 /// The currently selected tile.
 #[derive(Resource, Default, Debug)]
 pub enum SelectedTile {
-    /// The index (ID) of the selected tile.
-    Tile(u32),
+    /// The entity of the selected tile.
+    Tile(Entity),
 
     /// Zero tile selected.
     #[default]
@@ -36,9 +36,9 @@ pub enum SelectedTile {
 impl SelectedTile {
     /// Returns the index (ID) of the selected tile.
     /// Returns `None` if no tile is selected.
-    pub const fn index(&self) -> Option<u32> {
+    pub const fn get_entity(&self) -> Option<Entity> {
         match self {
-            Self::Tile(index) => Some(*index),
+            Self::Tile(entity) => Some(*entity),
             Self::None => None,
         }
     }
@@ -103,7 +103,7 @@ fn select_closest_tile(
     mut click_event_reader: EventReader<ClickOnTheWorld>,
     mut clicked_tile_event_writer: EventWriter<TileJustClicked>,
     tile_gap: Res<TilesGap>,
-    mut selected_tile: ResMut<SelectedTile>,
+    mut current_entity: ResMut<SelectedTile>,
 ) {
     for click_event in click_event_reader.read() {
         // The closest tile and its distance to the cursor.
@@ -129,12 +129,11 @@ fn select_closest_tile(
             }
         }
         if let Some(tile_entity) = closest_entity {
-            let entity_index = tile_entity.index();
-            clicked_tile_event_writer.send(TileJustClicked(entity_index));
-            if selected_tile.index() == Some(entity_index) {
-                *selected_tile = SelectedTile::None;
+            clicked_tile_event_writer.send(TileJustClicked(tile_entity.clone()));
+            if current_entity.get_entity() == Some(tile_entity) {
+                *current_entity = SelectedTile::None;
             } else {
-                *selected_tile = SelectedTile::Tile(entity_index);
+                *current_entity = SelectedTile::Tile(tile_entity);
             }
         }
     }
