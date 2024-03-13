@@ -5,7 +5,6 @@ use bevy::prelude::*;
 use super::renderer::TilesGap;
 use super::Tile;
 
-
 /// An event that is triggered when a mouse button is clicked.
 ///
 /// The event contains the position of the cursor in the world.
