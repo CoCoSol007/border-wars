@@ -90,7 +90,7 @@ fn mouse_handler(
     events_writer.send(ClickOnTheWorld(cursor_position_in_world));
 }
 
-/// Get the closest tile to the cursor, send it in an event and select it.
+/// Get the closest tile to the cursor and select it.
 fn select_closest_tile(
     tiles: Query<(Entity, &Transform, &Tile)>,
     mut click_event_reader: EventReader<ClickOnTheWorld>,
