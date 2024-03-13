@@ -5,6 +5,7 @@ use border_wars::camera::CameraPlugin;
 use border_wars::map::click_tile::TilesClickable;
 use border_wars::map::generation::{MapGenerationPlugin, StartMapGeneration};
 use border_wars::map::renderer::RendererPlugin;
+use border_wars::map::selected_tile::SelectTilePlugin;
 use border_wars::scenes::ScenesPlugin;
 use border_wars::ui::tiles_info::TilesInfoPlugin;
 
