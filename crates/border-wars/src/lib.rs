@@ -2,6 +2,7 @@
 
 use bevy::prelude::*;
 
+pub mod actions;
 pub mod camera;
 pub mod map;
 pub mod responsive_scale;
