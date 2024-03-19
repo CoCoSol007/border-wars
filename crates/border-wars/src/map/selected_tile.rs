@@ -1,14 +1,9 @@
-//! All programs related to the clicking on a tile.
+//! All programs related to the selection of a tile.
 
 use bevy::prelude::*;
 
+use super::renderer::TilesGap;
 use super::Tile;
-
-/// The event that is triggered when a tile is clicked.
-///
-/// The event contains the index (ID) of the clicked tile.
-#[derive(Event)]
-pub struct TileJustClicked(pub u32);
 
 /// An event that is triggered when a mouse button is clicked.
 ///
@@ -21,15 +16,37 @@ struct ClickOnTheWorld(Vec2);
 #[derive(Component)]
 pub struct ZoneNotClickable;
 
-/// A plugin that handles the selection of tiles.
-pub struct TilesClickable;
+/// The currently selected tile.
+#[derive(Resource, Default, Debug)]
+pub enum SelectedTile {
+    /// The entity of the selected tile.
+    Tile(Entity),
 
-impl Plugin for TilesClickable {
+    /// Zero tile selected.
+    #[default]
+    None,
+}
+
+impl SelectedTile {
+    /// Returns the entity of the selected tile.
+    /// Returns `None` if no tile is selected.
+    pub const fn get_entity(&self) -> Option<Entity> {
+        match self {
+            Self::Tile(entity) => Some(*entity),
+            Self::None => None,
+        }
+    }
+}
+
+/// A plugin that handles the selection of tiles.
+pub struct SelectTilePlugin;
+
+impl Plugin for SelectTilePlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(PreUpdate, mouse_handler)
             .add_systems(PreUpdate, select_closest_tile)
             .add_event::<ClickOnTheWorld>()
-            .add_event::<TileJustClicked>();
+            .init_resource::<SelectedTile>();
     }
 }
 
@@ -73,25 +90,30 @@ fn mouse_handler(
     events_writer.send(ClickOnTheWorld(cursor_position_in_world));
 }
 
-/// Get the closest tile to the cursor and send it in an event.
+/// Get the closest tile to the cursor and select it.
 fn select_closest_tile(
     tiles: Query<(Entity, &Transform, &Tile)>,
     mut click_event_reader: EventReader<ClickOnTheWorld>,
-    mut clicked_tile_event_writer: EventWriter<TileJustClicked>,
+    tile_gap: Res<TilesGap>,
+    mut current_entity: ResMut<SelectedTile>,
 ) {
     for click_event in click_event_reader.read() {
-        // The closest tile and its distance to the cursor.
+        // The closest tile and its position.
         let mut closest_entity: Option<Entity> = None;
         let mut closest_position: Option<f32> = None;
 
+        // To keep the aspect ratio.
+        let click_position = click_event.0 / tile_gap.0;
+
         for (tile_entity, tile_transform, tile_type) in tiles.iter() {
-            let mut tile_position = tile_transform.translation.truncate();
             let tile_size = tile_type.get_image_size();
             let tile_scale = tile_transform.scale.truncate();
 
-            tile_position += (tile_size / 2.0) * tile_scale;
+            let mut tile_position = tile_transform.translation.truncate() / tile_gap.0;
+            // The origine of the tile is the bottom center.
+            tile_position.y += (tile_size.y / 2.0) * tile_scale.y / tile_gap.0.y;
 
-            let distance_to_cursor = tile_position.distance(click_event.0);
+            let distance_to_cursor = tile_position.distance(click_position);
 
             if closest_position.is_none() || closest_position > Some(distance_to_cursor) {
                 closest_entity = Some(tile_entity);
@@ -99,7 +121,11 @@ fn select_closest_tile(
             }
         }
         if let Some(tile_entity) = closest_entity {
-            clicked_tile_event_writer.send(TileJustClicked(tile_entity.index()));
+            if current_entity.get_entity() == Some(tile_entity) {
+                *current_entity = SelectedTile::None;
+            } else {
+                *current_entity = SelectedTile::Tile(tile_entity);
+            }
         }
     }
 }
