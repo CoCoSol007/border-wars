@@ -80,7 +80,7 @@ impl Connection {
             path.push(".relay-data");
 
             // Check if the file exists.
-            match path.exists() {
+            match false {
                 true => {
                     // Read the file and parse the identifier and secret key.
                     let contents = fs::read(&path)?;

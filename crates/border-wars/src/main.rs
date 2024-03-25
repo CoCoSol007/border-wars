@@ -5,6 +5,7 @@ use border_wars::camera::CameraPlugin;
 use border_wars::map::generation::MapGenerationPlugin;
 use border_wars::map::renderer::RendererPlugin;
 use border_wars::map::selected_tile::SelectTilePlugin;
+use border_wars::networking::NetworkingPlugin;
 use border_wars::scenes::ScenesPlugin;
 
 fn main() {
@@ -14,6 +15,7 @@ fn main() {
         .add_plugins(RendererPlugin)
         .add_plugins(CameraPlugin)
         .add_plugins(SelectTilePlugin)
+        .add_plugins(NetworkingPlugin)
         .add_plugins(MapGenerationPlugin)
         .run();
 }

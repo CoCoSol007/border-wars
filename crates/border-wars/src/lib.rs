@@ -1,9 +1,13 @@
 //! The file that contains utility functions, enums, structs for the game.
 
+use bevnet::Uuid;
 use bevy::prelude::*;
+use networking::PlayerRank;
+use serde::{Deserialize, Serialize};
 
 pub mod camera;
 pub mod map;
+pub mod networking;
 pub mod responsive_scale;
 pub mod scenes;
 
@@ -19,4 +23,17 @@ pub enum CurrentScene {
 
     /// When we play this wonderful game.
     Game,
+}
+
+/// A player in the game.
+#[derive(Serialize, Deserialize, Clone, Debug, Component, Resource)]
+pub struct Player {
+    /// The name of the player.
+    pub name: String,
+
+    /// The rank of the player.
+    pub rank: PlayerRank,
+
+    /// The uuid of the player.
+    pub uuid: Uuid,
 }
