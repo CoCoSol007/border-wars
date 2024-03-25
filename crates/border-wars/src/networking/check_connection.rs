@@ -1,4 +1,5 @@
-//! TODO
+//! All the code related to the check connection (check every X seconds if any
+//! player is still connected).
 
 use std::time::Instant;
 
@@ -37,6 +38,7 @@ impl Plugin for CheckConnectionPlugin {
 }
 
 /// The interval to check if a player is still connected.
+/// We put this into a const because we don't want to change it.
 const CHECK_CONNECTION_INTERVAL: std::time::Duration = std::time::Duration::from_secs(5);
 
 /// A fonction that check if a player is still connected.
@@ -64,24 +66,12 @@ fn check_connection(
     }
 }
 
-/// A simple timer.
-struct Timer(std::time::Duration, std::time::Instant);
+/// A simple time/instant that implement Default.
+struct Time(std::time::Instant);
 
-impl Timer {
-    /// Create a new timer.
-    fn new(duration: std::time::Duration) -> Self {
-        Self(duration, std::time::Instant::now())
-    }
-
-    /// Check if the timer is finished.
-    fn is_finished(&self) -> bool {
-        self.1.elapsed() >= self.0
-    }
-}
-
-impl Default for Timer {
+impl Default for Time {
     fn default() -> Self {
-        Self::new(CHECK_CONNECTION_INTERVAL / 2)
+        Self(std::time::Instant::now())
     }
 }
 
@@ -90,9 +80,9 @@ fn send_check_connection(
     mut check_connection_event: EventWriter<SendTo<IAmConnected>>,
     all_players_query: Query<&Player>,
     connection: Res<Connection>,
-    mut timer: Local<Timer>,
+    mut timer: Local<Time>,
 ) {
-    if !timer.is_finished() {
+    if timer.0.elapsed() < CHECK_CONNECTION_INTERVAL / 2 {
         return;
     }
     let Some(self_player) = all_players_query
@@ -106,7 +96,7 @@ fn send_check_connection(
         check_connection_event.send(SendTo(player.uuid, IAmConnected(self_player.clone())));
     }
 
-    timer.1 = std::time::Instant::now();
+    timer.0 = std::time::Instant::now();
 }
 
 /// A fonction that handle player disconnection.
