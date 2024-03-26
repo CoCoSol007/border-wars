@@ -44,7 +44,6 @@ fn lobby_ui(
                 return;
             }
             ui.label("Game ID: ");
-            // TODO : get the game ID and display it.
             ui.text_edit_singleline(&mut connection.identifier().unwrap_or_default().to_string());
         });
 
