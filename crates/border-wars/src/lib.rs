@@ -26,7 +26,7 @@ pub enum CurrentScene {
 }
 
 /// A player in the game.
-#[derive(Serialize, Deserialize, Clone, Debug, Component, Resource)]
+#[derive(Serialize, Deserialize, Clone, Debug, Component, Resource, PartialEq, Eq, Hash)]
 pub struct Player {
     /// The name of the player.
     pub name: String,
