@@ -3,9 +3,11 @@
 use bevnet::{Connection, SendTo};
 use bevy::prelude::*;
 use bevy_egui::{egui, EguiContexts};
+use rand::Rng;
 
+use crate::map::generation::StartMapGeneration;
 use crate::networking::connection::RemovePlayer;
-use crate::networking::PlayerRank;
+use crate::networking::{PlayerRank, StartGame};
 use crate::{CurrentScene, Player};
 
 /// The plugin for the lobby.
@@ -20,10 +22,11 @@ impl Plugin for LobbyPlugin {
 /// Display the UI of the lobby.
 fn lobby_ui(
     mut ctx: EguiContexts,
-    mut next_scene: ResMut<NextState<CurrentScene>>,
     connection: Res<Connection>,
     all_players_query: Query<&Player>,
     mut kick_player: EventWriter<SendTo<RemovePlayer>>,
+    mut map_size: Local<u32>,
+    mut start_game_event: EventWriter<SendTo<StartGame>>,
 ) {
     // Get our player info.
     let Some(self_player) = all_players_query
@@ -62,9 +65,44 @@ fn lobby_ui(
             ui.separator();
         }
 
-        if self_player.rank == PlayerRank::Admin && ui.button("Run the game").clicked() {
-            next_scene.set(CurrentScene::Game);
-            // TODO: run the game
+        if self_player.rank != PlayerRank::Admin {
+            return;
+        }
+
+        ui.add(egui::Slider::new(&mut (*map_size), 1..=5).text("map size"));
+
+        if !ui.button("Run the game").clicked() {
+            return;
+        }
+
+        let seed = rand::thread_rng().gen::<u32>();
+        let index = *map_size as usize;
+        let nomber_of_players = all_players_query.iter().count() as u32;
+
+        let radius = get_map_sizes(nomber_of_players)[index] as u16 * 2;
+
+        // Start the game.
+        for player in all_players_query.iter() {
+            start_game_event.send(SendTo(
+                player.uuid,
+                StartGame(StartMapGeneration { seed, radius }),
+            ));
         }
     });
+}
+
+/// Get the map sizes form a given number of players.
+fn get_map_sizes(number_of_players: u32) -> Vec<u32> {
+    let mut result = Vec::with_capacity(6);
+
+    let mut current = 0;
+    while result.len() < 6 {
+        current += 1;
+
+        if (current * 6) % number_of_players == 0 {
+            result.push(current);
+        }
+    }
+
+    result
 }

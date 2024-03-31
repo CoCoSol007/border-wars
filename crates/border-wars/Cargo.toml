@@ -17,3 +17,4 @@ noise = "0.8.2"
 paste = "1.0.14"
 bevnet = { path = "../bevnet" }
 serde = "1.0.197"
+rand = "0.8.5"

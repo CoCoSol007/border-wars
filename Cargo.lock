@@ -1319,6 +1319,7 @@ dependencies = [
  "bevy_egui",
  "noise",
  "paste",
+ "rand 0.8.5",
  "serde",
 ]
 
