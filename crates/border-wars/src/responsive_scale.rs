@@ -28,10 +28,10 @@ pub fn change_scaling(
     windows: Query<&Window>,
     size: Res<UILayoutSize>,
 ) {
-    if !windows.get_single().unwrap().resolution.physical_height() > 0 {
+    let window = windows.get_single().expect("Main window not found");
+    if window.resolution.physical_height() == 0 {
         return;
     };
-    let window = windows.get_single().expect("Main window not found");
     let (a, b) = (
         window.resolution.width() / size.0.x,
         window.resolution.height() / size.0.y,
