@@ -46,7 +46,11 @@ impl Plugin for CameraPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, init_camera)
             .add_systems(Startup, init_resources_for_camera)
-            .add_systems(Update, movement_system.run_if(in_state(CurrentScene::Game)))
+            .add_systems(
+                Update,
+                (keyboard_movement_system, mouse_movement_system)
+                    .run_if(in_state(CurrentScene::Game)),
+            )
             .add_systems(Update, scale_system.run_if(in_state(CurrentScene::Game)));
     }
 }
@@ -78,7 +82,7 @@ fn init_resources_for_camera(mut commands: Commands) {
 }
 
 /// Moves the camera with keyboard input.
-fn movement_system(
+fn keyboard_movement_system(
     mut query: Query<&mut Transform, With<Camera>>,
     keys: Res<Input<KeyCode>>,
     keys_settings: Res<KeysMovementSettings>,
@@ -97,6 +101,35 @@ fn movement_system(
         }
 
         transform.translation += target;
+    }
+}
+
+/// Moves the camera with mouse input.
+fn mouse_movement_system(
+    mouse_button_input: Res<Input<MouseButton>>,
+    mut query: Query<&mut Transform, With<Camera>>,
+    windows: Query<&Window>,
+    mut last_position: Local<Option<Vec2>>,
+) {
+    let window = windows.get_single().expect("Main window not found");
+    let Some(position) = window.cursor_position() else {
+        return;
+    };
+
+    if mouse_button_input.just_pressed(MouseButton::Right) {
+        *last_position = Some(position);
+    }
+
+    if mouse_button_input.just_released(MouseButton::Right) {
+        *last_position = None;
+    }
+
+    if let Some(old_position) = *last_position {
+        for mut transform in query.iter_mut() {
+            let offset = (old_position - position).extend(0.0) * Vec3::new(1., -1., 1.);
+            transform.translation += offset;
+        }
+        *last_position = Some(position);
     }
 }
 
