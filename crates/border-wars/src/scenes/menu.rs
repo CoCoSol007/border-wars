@@ -2,7 +2,7 @@
 
 use bevy::prelude::*;
 
-use crate::{change_scaling, CurrentScene};
+use crate::CurrentScene;
 
 /// The plugin for the menu.
 pub struct MenuPlugin;
@@ -16,7 +16,7 @@ impl Plugin for MenuPlugin {
     }
 }
 
-/// TODO
+/// A Component to identify hovered textures.
 #[derive(Component, Clone)]
 struct HoveredTexture {
     /// TODO
@@ -26,7 +26,8 @@ struct HoveredTexture {
     hovered_texture: Handle<Image>,
 }
 
-/// TODO
+/// A Component to identify menus entities.
+/// In order to be able to remove them later.
 #[derive(Component)]
 struct MenuEntity;
 
@@ -59,7 +60,7 @@ fn menu_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
         &mut commands,
         HoveredTexture {
             texture: asset_server.load("setting.png"),
-            hovered_texture: asset_server.load("setting.png"),
+            hovered_texture: asset_server.load("info.png"),
         },
     );
 
@@ -74,12 +75,12 @@ fn menu_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
         &mut commands,
         HoveredTexture {
             texture: asset_server.load("info.png"),
-            hovered_texture: asset_server.load("info.png"),
+            hovered_texture: asset_server.load("setting.png"),
         },
     );
 }
 
-/// TODO
+/// A function to create a side button.
 fn create_side_button(
     margin: UiRect,
     target_scene: CurrentScene,
@@ -119,7 +120,7 @@ fn create_button(
             image: textures.texture.clone().into(),
             ..default()
         })
-        .insert((target_scene, textures, MenuEntity));
+        .insert((target_scene, textures));
 }
 
 /// TODO
@@ -163,23 +164,21 @@ fn default_style() -> Style {
 
 /// TODO
 fn main_node(main_node: &mut ChildBuilder<'_, '_, '_>, asset_server: &Res<AssetServer>) {
-    main_node
-        .spawn(ImageBundle {
-            style: Style {
-                height: Val::Px(78.),
-                width: Val::Px(614.),
-                margin: UiRect {
-                    left: Val::Auto,
-                    right: Val::Auto,
-                    top: Val::Px(25.),
-                    bottom: Val::Px(25.),
-                },
-                ..default()
+    main_node.spawn(ImageBundle {
+        style: Style {
+            height: Val::Px(78.),
+            width: Val::Px(614.),
+            margin: UiRect {
+                left: Val::Auto,
+                right: Val::Auto,
+                top: Val::Px(25.),
+                bottom: Val::Px(25.),
             },
-            image: asset_server.load("border_wars.png").into(),
             ..default()
-        })
-        .insert(MenuEntity);
+        },
+        image: asset_server.load("border_wars.png").into(),
+        ..default()
+    });
 
     main_node
         .spawn(NodeBundle {
@@ -203,13 +202,11 @@ fn main_node(main_node: &mut ChildBuilder<'_, '_, '_>, asset_server: &Res<AssetS
                     style: default_style(),
                     ..default()
                 })
-                .insert(MenuEntity)
                 .with_children(|host| {
                     host.spawn(NodeBundle {
                         style: default_style(),
                         ..default()
                     })
-                    .insert(MenuEntity)
                     .with_children(|ui| {
                         ui.spawn(NodeBundle {
                             style: Style {
@@ -268,13 +265,11 @@ fn main_node(main_node: &mut ChildBuilder<'_, '_, '_>, asset_server: &Res<AssetS
                     style: default_style(),
                     ..default()
                 })
-                .insert(MenuEntity)
                 .with_children(|join| {
                     join.spawn(NodeBundle {
                         style: default_style(),
                         ..default()
                     })
-                    .insert(MenuEntity)
                     .with_children(|ui| {
                         ui.spawn(NodeBundle {
                             style: Style {
