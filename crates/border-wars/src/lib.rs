@@ -6,6 +6,7 @@ use networking::PlayerRank;
 use serde::{Deserialize, Serialize};
 
 pub mod camera;
+pub mod hover;
 pub mod map;
 pub mod networking;
 pub mod responsive_scale;
