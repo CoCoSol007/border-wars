@@ -7,6 +7,7 @@ use border_wars::map::renderer::RendererPlugin;
 use border_wars::map::selected_tile::SelectTilePlugin;
 use border_wars::networking::NetworkingPlugin;
 use border_wars::scenes::ScenesPlugin;
+use border_wars::ui::UiPlugin;
 
 fn main() {
     App::new()
@@ -17,5 +18,6 @@ fn main() {
         .add_plugins(SelectTilePlugin)
         .add_plugins(NetworkingPlugin)
         .add_plugins(MapGenerationPlugin)
+        .add_plugins(UiPlugin)
         .run();
 }
