@@ -10,9 +10,8 @@ pub struct MenuPlugin;
 impl Plugin for MenuPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(OnEnter(CurrentScene::Menu), menu_ui);
-        // app.add_systems(Update, change_scaling);
-        // app.add_systems(Update, hover_system);
-        // app.add_systems(Update, pressed_system);
+        app.add_systems(Update, hover_system);
+        app.add_systems(Update, pressed_system);
         app.add_systems(OnExit(CurrentScene::Menu), destroy_menu);
     }
 }
