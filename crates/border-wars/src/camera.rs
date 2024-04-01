@@ -107,7 +107,7 @@ fn keyboard_movement_system(
 /// Moves the camera with mouse input.
 fn mouse_movement_system(
     mouse_button_input: Res<Input<MouseButton>>,
-    mut query: Query<&mut Transform, With<Camera>>,
+    mut query: Query<(&mut Transform, &OrthographicProjection), With<Camera>>,
     windows: Query<&Window>,
     mut last_position: Local<Option<Vec2>>,
 ) {
@@ -125,9 +125,9 @@ fn mouse_movement_system(
     }
 
     if let Some(old_position) = *last_position {
-        for mut transform in query.iter_mut() {
+        for (mut transform, projection) in query.iter_mut() {
             let offset = (old_position - position).extend(0.0) * Vec3::new(1., -1., 1.);
-            transform.translation += offset;
+            transform.translation += offset * projection.scale;
         }
         *last_position = Some(position);
     }
