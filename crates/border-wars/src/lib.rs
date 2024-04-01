@@ -12,7 +12,7 @@ pub mod scenes;
 pub mod ui;
 
 /// The current scene of the game.
-#[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash, States)]
+#[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash, States, Component)]
 pub enum CurrentScene {
     /// When we are in the main menu.
     #[default]

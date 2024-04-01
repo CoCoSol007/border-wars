@@ -2,10 +2,13 @@
 
 use bevnet::{Connection, SendTo, Uuid};
 use bevy::prelude::*;
+use bevy::render::render_resource::TextureUsages;
+use bevy_egui::egui::epaint::textures;
 use bevy_egui::{egui, EguiContexts};
 
 use crate::networking::connection::RequestJoin;
 use crate::networking::PlayerRank;
+use crate::ui::hover::HoveredTexture;
 use crate::{CurrentScene, Player};
 
 /// The plugin for the menu.
@@ -82,6 +85,8 @@ fn menu_ui(
 #[derive(Component)]
 struct MenuEntity;
 
+type TargetScene = CurrentScene;
+
 fn menu_ui2(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
         .spawn(ImageBundle {
@@ -97,12 +102,56 @@ fn menu_ui2(mut commands: Commands, asset_server: Res<AssetServer>) {
             ..default()
         })
         .insert(MenuEntity);
+
+    create_side_button(
+        UiRect {
+            left: Val::Px(25.),
+            right: Val::Auto,
+            top: Val::Px(25.),
+            bottom: Val::Auto,
+        },
+        TargetScene::Lobby,
+        &mut commands,
+        HoveredTexture {
+            texture: asset_server.load("menu/setting.png"),
+            hovered_texture: asset_server.load("menu/setting_hover.png"),
+        },
+    );
+
+    create_side_button(
+        UiRect {
+            left: Val::Auto,
+            right: Val::Px(25.),
+            top: Val::Px(25.),
+            bottom: Val::Auto,
+        },
+        CurrentScene::Lobby,
+        &mut commands,
+        HoveredTexture {
+            texture: asset_server.load("menu/info.png"),
+            hovered_texture: asset_server.load("menu/info_hover.png"),
+        },
+    );
+
+    renderer(
+        &asset_server,
+        commands,
+        Some(HoveredTexture {
+            texture: asset_server.load("menu/border_wars.png"),
+            hovered_texture: asset_server.load("menu/border_wars.png"),
+        }),
+        None,
+        Val::Px(78.),
+        Val::Px(614.),
+        Val::Px(25.),
+        Val::Px(333.),
+    )
 }
 
 /// A function to create a side button.
 fn create_side_button(
     margin: UiRect,
-    target_scene: CurrentScene,
+    target_scene: TargetScene,
     commands: &mut Commands,
     textures: HoveredTexture,
 ) {
@@ -119,4 +168,38 @@ fn create_side_button(
             ..default()
         })
         .insert((target_scene, textures, MenuEntity));
+}
+
+fn renderer(
+    asset_server: &Res<AssetServer>,
+    mut background: Commands,
+    textures: Option<HoveredTexture>,
+    texture: Option<&str>,
+    height: Val,
+    width: Val,
+    top: Val,
+    left: Val,
+) {
+    let mut i = background
+        .spawn(ImageBundle {
+            style: Style {
+                height,
+                width,
+                top,
+                left,
+                ..default()
+            },
+            image: match textures {
+                Some(ref textures) => textures.texture.clone().into(),
+                _ => match texture {
+                    Some(texture) => asset_server.load(texture).into(),
+                    _ => panic!("PAS DE TEXTURES FRER"),
+                },
+            },
+            ..default()
+        });
+        if textures.is_some() {
+            i.insert(textures.unwrap());
+        }
+        
 }
