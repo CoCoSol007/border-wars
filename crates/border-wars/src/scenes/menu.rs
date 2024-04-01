@@ -13,7 +13,8 @@ pub struct MenuPlugin;
 
 impl Plugin for MenuPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, menu_ui.run_if(in_state(CurrentScene::Menu)));
+        // app.add_systems(Update, menu_ui.run_if(in_state(CurrentScene::Menu)));
+        app.add_systems(OnEnter(CurrentScene::Menu), menu_ui2);
     }
 }
 
@@ -74,4 +75,48 @@ fn menu_ui(
             });
         }
     });
+}
+
+/// A Component to identify menus entities.
+/// In order to be able to remove them later.
+#[derive(Component)]
+struct MenuEntity;
+
+fn menu_ui2(mut commands: Commands, asset_server: Res<AssetServer>) {
+    commands
+        .spawn(ImageBundle {
+            style: Style {
+                margin: UiRect::all(Val::Auto),
+                width: Val::Px(1280.),
+                height: Val::Px(720.),
+                flex_direction: FlexDirection::Column,
+                ..default()
+            },
+            image: asset_server.load("menu/bw_menu_bg.png").into(),
+            z_index: ZIndex::Local(0),
+            ..default()
+        })
+        .insert(MenuEntity);
+}
+
+/// A function to create a side button.
+fn create_side_button(
+    margin: UiRect,
+    target_scene: CurrentScene,
+    commands: &mut Commands,
+    textures: HoveredTexture,
+) {
+    commands
+        .spawn(ButtonBundle {
+            style: Style {
+                width: Val::Px(53.),
+                aspect_ratio: Some(1.),
+                margin,
+                ..default()
+            },
+            z_index: ZIndex::Global(14),
+            image: textures.texture.clone().into(),
+            ..default()
+        })
+        .insert((target_scene, textures, MenuEntity));
 }
