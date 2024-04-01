@@ -13,12 +13,12 @@ impl Plugin for HoverPlugin {
 
 /// A component that stores the hover texture and the original texture.
 #[derive(Component, Clone)]
-struct HoveredTexture {
+pub struct HoveredTexture {
     /// The original texture.
-    texture: Handle<Image>,
+    pub texture: Handle<Image>,
 
     /// The hovered texture.
-    hovered_texture: Handle<Image>,
+    pub hovered_texture: Handle<Image>,
 }
 
 /// The system that applies the hover logic by changing the texture.
