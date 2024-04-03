@@ -1,9 +1,7 @@
 //! TODO
 
-use bevnet::Connection;
 use bevy::prelude::*;
 use bevy::utils::hashbrown::HashSet;
-use bevy::utils::HashMap;
 
 use super::generation::EndMapGeneration;
 use super::ownership::Owner;
@@ -25,9 +23,8 @@ fn init_spawn_point(
     mut end_map_event: EventReader<EndMapGeneration>,
     players: Query<&Player>,
     mut map: Query<(Entity, &TilePosition, &mut Tile)>,
-    connection: Res<Connection>,
 ) {
-    for _ in end_map_event.iter() {
+    for _ in end_map_event.read() {
         let Some(radius) = map.iter().map(|(_, p, _)| p.0.abs()).max() else {
             return;
         };
