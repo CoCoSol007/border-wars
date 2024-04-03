@@ -3,6 +3,7 @@
 use bevy::prelude::*;
 use border_wars::camera::CameraPlugin;
 use border_wars::map::generation::MapGenerationPlugin;
+use border_wars::map::ownership::OwnershipPlugin;
 use border_wars::map::renderer::RendererPlugin;
 use border_wars::map::selected_tile::SelectTilePlugin;
 use border_wars::networking::NetworkingPlugin;
@@ -19,5 +20,6 @@ fn main() {
         .add_plugins(NetworkingPlugin)
         .add_plugins(MapGenerationPlugin)
         .add_plugins(UiPlugin)
+        .add_plugins(OwnershipPlugin)
         .run();
 }
