@@ -39,7 +39,7 @@ fn init_spawn_point(
         .abs();
 
     if radius == 0 {
-        panic!("Map radius must be greater than 0");
+        return;
     }
 
     let map_hashmap: HashMap<&TilePosition, Entity> = map.iter().map(|(e, p)| (p, e)).collect();
