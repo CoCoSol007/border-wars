@@ -31,10 +31,11 @@ fn setup_ownership_resources(mut commands: Commands) {
 
 /// Render the ownership of the tiles by applying colors.
 fn render_ownership(
-    mut query: Query<(&mut Sprite, &Owner), Changed<Owner>>,
+    mut query: Query<(&mut Sprite, &Owner), (Changed<Owner>, Changed<Sprite>)>,
     contrast: Res<OwnershipColorContrast>,
 ) {
     for (mut sprite, owner) in query.iter_mut() {
+        println!("{:?}", contrast.0);
         let (r, g, b) = owner.0.color;
         let target = mix_colors(Color::rgb_u8(r, g, b), sprite.color, 1. - contrast.0);
 

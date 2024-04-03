@@ -6,7 +6,8 @@ use bevy::utils::hashbrown::HashSet;
 use bevy::utils::HashMap;
 
 use super::generation::EndMapGeneration;
-use super::TilePosition;
+use super::ownership::Owner;
+use super::{Tile, TilePosition};
 use crate::Player;
 
 /// The plugin for the spawn point.
@@ -22,68 +23,50 @@ impl Plugin for SpawnPointPlugin {
 fn init_spawn_point(
     mut commands: Commands,
     mut end_map_event: EventReader<EndMapGeneration>,
-    players: Query<(Entity, &Player)>,
-    map: Query<(Entity, &TilePosition)>,
+    players: Query<&Player>,
+    mut map: Query<(Entity, &TilePosition, &mut Tile)>,
     connection: Res<Connection>,
 ) {
-    if end_map_event.is_empty() {
-        return;
-    }
-
-    let radius = map
-        .iter()
-        .max_by(|(_, a), (_, b)| a.0.cmp(&b.0))
-        .unwrap()
-        .1
-        .0
-        .abs();
-
-    if radius == 0 {
-        return;
-    }
-
-    let map_hashmap: HashMap<&TilePosition, Entity> = map.iter().map(|(e, p)| (p, e)).collect();
-
-    let nb_player = players.iter().count();
-
-    let mut spawnpoints = Vec::with_capacity(nb_player);
-
-    for (i, target_position) in TilePosition::new(0, 0)
-        .ring(radius as usize / 2)
-        .enumerate()
-    {
-        let Some(target_entity) = map_hashmap.get(&target_position) else {
+    for _ in end_map_event.iter() {
+        let Some(radius) = map.iter().map(|(_, p, _)| p.0.abs()).max() else {
             return;
         };
 
-        if i % (radius as usize * 3 / nb_player) != 0 {
-            continue;
+        if radius == 0 {
+            return;
         }
-        spawnpoints.push((*target_entity, target_position));
-    }
 
-    let mut sorted_players = players.iter().collect::<Vec<_>>();
-    sorted_players.sort_by(compare_player);
-    spawnpoints.sort_by(compare_spawnpoint_entity);
+        let ring: HashSet<TilePosition> =
+            TilePosition::new(0, 0).ring(radius as usize / 2).collect();
 
-    for (i, (target_entity, target_position)) in spawnpoints.iter().enumerate() {
-        let player = sorted_players[i].1;
-        if Some(player.uuid) == connection.identifier() {
-            commands.entity(*target_entity).despawn();
+        let mut sorted_tiles = map
+            .iter_mut()
+            .filter(|(_, p, _)| ring.contains(*p))
+            .collect::<Vec<_>>();
+
+        sorted_tiles.sort_by(|a, b| compare_spawnpoint_entity(a.1, b.1));
+
+        let mut sorted_players = players.iter().collect::<Vec<_>>();
+        sorted_players.sort_by(|a: &&Player, b: &&Player| compare_player(a, b));
+
+        for (i, tile) in sorted_tiles.iter_mut().enumerate() {
+            let Some(player) = sorted_players.get(i) else {
+                continue;
+            };
+            println!("{:?}", player);
+            *tile.2 = Tile::Castle;
+            commands.entity(tile.0).insert(Owner(Player::clone(player)));
         }
     }
 }
 
 /// TODO
-fn compare_player((_, a): &(Entity, &Player), (_, b): &(Entity, &Player)) -> std::cmp::Ordering {
+fn compare_player(a: &Player, b: &Player) -> std::cmp::Ordering {
     a.uuid.cmp(&b.uuid)
 }
 
 /// TODO
-fn compare_spawnpoint_entity(
-    (_, a): &(Entity, TilePosition),
-    (_, b): &(Entity, TilePosition),
-) -> std::cmp::Ordering {
+fn compare_spawnpoint_entity(a: &TilePosition, b: &TilePosition) -> std::cmp::Ordering {
     let r = a.0.abs().cmp(&b.0.abs());
     if r == std::cmp::Ordering::Equal {
         a.1.cmp(&b.1)
