@@ -29,9 +29,12 @@ fn setup_ownership_resources(mut commands: Commands) {
     commands.insert_resource(OwnershipColorContrast(0.4));
 }
 
+/// The type condition for update ownership.
+type OwnershipUpdate = Or<(Changed<Owner>, Changed<Sprite>)>;
+
 /// Render the ownership of the tiles by applying colors.
 fn render_ownership(
-    mut query: Query<(&mut Sprite, &Owner), Changed<Owner>>,
+    mut query: Query<(&mut Sprite, &Owner), OwnershipUpdate>,
     contrast: Res<OwnershipColorContrast>,
 ) {
     for (mut sprite, owner) in query.iter_mut() {
