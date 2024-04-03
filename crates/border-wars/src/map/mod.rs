@@ -2,6 +2,7 @@
 
 pub mod generation;
 pub mod hex;
+pub mod ownership;
 pub mod renderer;
 pub mod selected_tile;
 pub mod spawnpoint;
