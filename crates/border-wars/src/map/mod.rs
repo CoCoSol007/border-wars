@@ -4,6 +4,7 @@ pub mod generation;
 pub mod hex;
 pub mod renderer;
 pub mod selected_tile;
+pub mod spawnpoint;
 
 use bevy::prelude::*;
 

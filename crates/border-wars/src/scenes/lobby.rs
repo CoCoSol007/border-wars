@@ -69,17 +69,17 @@ fn lobby_ui(
             return;
         }
 
-        ui.add(egui::Slider::new(&mut (*map_size), 1..=5).text("map size"));
+        ui.add(egui::Slider::new(&mut (*map_size), 1..=3).text("map size"));
 
         if !ui.button("Run the game").clicked() {
             return;
         }
 
         let seed = rand::thread_rng().gen::<u32>();
-        let index = *map_size as usize;
+        let index = *map_size as u16;
         let nomber_of_players = all_players_query.iter().count() as u32;
 
-        let radius = get_map_sizes(nomber_of_players)[index] as u16 * 2;
+        let radius = nomber_of_players as u16 * 2 * index;
 
         // Start the game.
         for player in all_players_query.iter() {
@@ -89,20 +89,4 @@ fn lobby_ui(
             ));
         }
     });
-}
-
-/// Get the map sizes form a given number of players.
-fn get_map_sizes(number_of_players: u32) -> Vec<u32> {
-    let mut result = Vec::with_capacity(6);
-
-    let mut current = 0;
-    while result.len() < 6 {
-        current += 1;
-
-        if (current * 6) % number_of_players == 0 {
-            result.push(current);
-        }
-    }
-
-    result
 }
