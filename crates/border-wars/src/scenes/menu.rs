@@ -2,8 +2,6 @@
 
 use bevnet::{Connection, SendTo, Uuid};
 use bevy::prelude::*;
-use bevy::render::render_resource::TextureUsages;
-use bevy_egui::egui::epaint::textures;
 use bevy_egui::{egui, EguiContexts};
 
 use crate::networking::connection::RequestJoin;
@@ -101,7 +99,8 @@ fn menu_ui2(mut commands: Commands, asset_server: Res<AssetServer>) {
             z_index: ZIndex::Local(0),
             ..default()
         })
-        .insert(MenuEntity);
+        .insert(MenuEntity)
+        .with_children(|child: &mut ChildBuilder| renderer(child, &asset_server));
 
     create_side_button(
         UiRect {
@@ -132,20 +131,6 @@ fn menu_ui2(mut commands: Commands, asset_server: Res<AssetServer>) {
             hovered_texture: asset_server.load("menu/info_hover.png"),
         },
     );
-
-    renderer(
-        &asset_server,
-        commands,
-        Some(HoveredTexture {
-            texture: asset_server.load("menu/border_wars.png"),
-            hovered_texture: asset_server.load("menu/border_wars.png"),
-        }),
-        None,
-        Val::Px(78.),
-        Val::Px(614.),
-        Val::Px(25.),
-        Val::Px(333.),
-    )
 }
 
 /// A function to create a side button.
@@ -170,36 +155,158 @@ fn create_side_button(
         .insert((target_scene, textures, MenuEntity));
 }
 
-fn renderer(
-    asset_server: &Res<AssetServer>,
-    mut background: Commands,
-    textures: Option<HoveredTexture>,
-    texture: Option<&str>,
+fn renderer(commands: &mut ChildBuilder, asset_server: &Res<AssetServer>) {
+    render(
+        commands,
+        (UiImage {
+                texture: asset_server.load("menu/border_wars.png"),
+                ..default()
+            },
+        ),
+        Val::Px(78.),
+        Val::Px(614.),
+        Val::Px(25.),
+        Val::Px(333.),
+    );
+
+    render(
+        commands,
+        (UiImage {
+                texture: asset_server.load("menu/host_icon.png"),
+                ..default()
+            },
+        ),
+        Val::Px(42.),
+        Val::Px(53.),
+        Val::Px(223.),
+        Val::Px(356.),
+    );
+
+    render(
+        commands,
+        (UiImage {
+                texture: asset_server.load("menu/host.png"),
+                ..default()
+            },
+        ),
+        Val::Px(38.),
+        Val::Px(105.),
+        Val::Px(229.),
+        Val::Px(429.),
+    );
+
+    render(
+        commands,
+        (UiImage {
+                texture: asset_server.load("menu/trait.png"),
+                ..default()
+            },
+        ),
+        Val::Px(7.),
+        Val::Px(427.),
+        Val::Px(279.),
+        Val::Px(426.),
+    );
+
+    render(
+        commands,
+        (UiImage {
+                texture: asset_server.load("menu/button.png"),
+                ..default()
+            },
+        ),
+        Val::Px(34.),
+        Val::Px(253.),
+        Val::Px(299.),
+        Val::Px(513.),
+    );
+
+    render(
+        commands,
+        (UiImage {
+                texture: asset_server.load("menu/join_icon.png"),
+                ..default()
+            },
+        ),
+        Val::Px(41.),
+        Val::Px(63.),
+        Val::Px(393.),
+        Val::Px(353.),
+    );
+
+    render(
+        commands,
+        (UiImage {
+                texture: asset_server.load("menu/join.png"),
+                ..default()
+            },
+        ),
+        Val::Px(38.),
+        Val::Px(101.),
+        Val::Px(392.),
+        Val::Px(428.),
+    );
+
+    render(
+        commands,
+        (UiImage {
+                texture: asset_server.load("menu/trait.png"),
+                ..default()
+            },
+        ),
+        Val::Px(7.),
+        Val::Px(427.),
+        Val::Px(443.),
+        Val::Px(426.),
+    );
+
+    render(
+        commands,
+        (UiImage {
+                texture: asset_server.load("menu/button.png"),
+                ..default()
+            },
+        ),
+        Val::Px(34.),
+        Val::Px(253.),
+        Val::Px(463.),
+        Val::Px(513.),
+    );
+
+    render(
+        commands,
+        (UiImage {
+                texture: asset_server.load("menu/airplane.png"),
+                ..default()
+            },
+        ),
+        Val::Px(30.),
+        Val::Px(35.),
+        Val::Px(465.),
+        Val::Px(777.),
+    );
+
+}
+
+fn render<T: Bundle>(
+    background: &mut ChildBuilder,
+    textures: T,
     height: Val,
     width: Val,
     top: Val,
     left: Val,
 ) {
-    let mut i = background
+    background
         .spawn(ImageBundle {
             style: Style {
                 height,
                 width,
                 top,
                 left,
+                position_type: PositionType::Absolute,
                 ..default()
             },
-            image: match textures {
-                Some(ref textures) => textures.texture.clone().into(),
-                _ => match texture {
-                    Some(texture) => asset_server.load(texture).into(),
-                    _ => panic!("PAS DE TEXTURES FRER"),
-                },
-            },
             ..default()
-        });
-        if textures.is_some() {
-            i.insert(textures.unwrap());
-        }
-        
+        })
+        .insert(textures);
 }
