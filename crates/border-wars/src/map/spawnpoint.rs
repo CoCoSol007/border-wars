@@ -37,6 +37,7 @@ fn init_spawn_point(
 
         let mut sorted_players = players.iter().collect::<Vec<_>>();
         sorted_players.sort_by(|a: &&Player, b: &&Player| a.uuid.cmp(&b.uuid));
+
         let mut sorted_players = sorted_players.iter();
 
         let interval = radius as usize * 3 / sorted_players.len();
