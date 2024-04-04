@@ -6,7 +6,7 @@ use border_wars::map::generation::MapGenerationPlugin;
 use border_wars::map::ownership::OwnershipPlugin;
 use border_wars::map::renderer::RendererPlugin;
 use border_wars::map::selected_tile::SelectTilePlugin;
-use border_wars::map::spawnpoint::SpawnPointPlugin;
+use border_wars::map::spawnpoint::SpawnpointPlugin;
 use border_wars::networking::NetworkingPlugin;
 use border_wars::scenes::ScenesPlugin;
 use border_wars::ui::UiPlugin;
@@ -21,7 +21,7 @@ fn main() {
         .add_plugins(NetworkingPlugin)
         .add_plugins(MapGenerationPlugin)
         .add_plugins(UiPlugin)
-        .add_plugins(SpawnPointPlugin)
+        .add_plugins(SpawnpointPlugin)
         .add_plugins(OwnershipPlugin)
         .run();
 }
