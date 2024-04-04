@@ -30,29 +30,40 @@ fn init_spawn_point(
         };
 
         if radius == 0 {
+            warn!("The map radius is 0 ");
             return;
         }
 
-        let ring: HashSet<TilePosition> =
-            TilePosition::new(0, 0).ring(radius as usize / 2).collect();
+        let target_ring = TilePosition::new(0, 0)
+            .ring(radius as usize / 2)
+            .collect::<HashSet<_>>();
 
         let mut sorted_tiles = map
             .iter_mut()
-            .filter(|(_, p, _)| ring.contains(*p))
+            .filter(|(_, p, _)| target_ring.contains(*p))
             .collect::<Vec<_>>();
+
+        println!("{}", sorted_tiles.len());
 
         sorted_tiles.sort_by(|a, b| compare_spawnpoint_entity(a.1, b.1));
 
         let mut sorted_players = players.iter().collect::<Vec<_>>();
         sorted_players.sort_by(|a: &&Player, b: &&Player| compare_player(a, b));
+        let mut sorted_players = sorted_players.iter();
 
-        for (i, tile) in sorted_tiles.iter_mut().enumerate() {
-            let Some(player) = sorted_players.get(i) else {
+        let number_players = sorted_players.len();
+
+        for (i, (entity, _, tile)) in sorted_tiles.iter_mut().enumerate() {
+            if i % radius as usize * 3 / number_players != 0 {
+                continue;
+            }
+            **tile = Tile::Castle;
+            let Some(player) = sorted_players.next() else {
                 continue;
             };
-            println!("{:?}", player);
-            *tile.2 = Tile::Castle;
-            commands.entity(tile.0).insert(Owner(Player::clone(player)));
+            commands
+                .entity(*entity)
+                .insert(Owner(Player::clone(player)));
         }
     }
 }
