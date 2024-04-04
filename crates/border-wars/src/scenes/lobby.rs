@@ -79,7 +79,7 @@ fn lobby_ui(
         let index = *map_size as u16;
         let nomber_of_players = all_players_query.iter().count() as u32;
 
-        let radius = nomber_of_players as u16 * 2 * (index+1);
+        let radius = nomber_of_players as u16 * 2 * (index + 1);
 
         // Start the game.
         for player in all_players_query.iter() {
