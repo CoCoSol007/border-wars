@@ -11,9 +11,9 @@ pub mod networking;
 pub mod scenes;
 pub mod ui;
 
-/// The current scene of the game.
+/// A scene of the game.
 #[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash, States, Component)]
-pub enum CurrentScene {
+pub enum Scene {
     /// When we are in the main menu.
     #[default]
     Menu,
@@ -24,6 +24,9 @@ pub enum CurrentScene {
     /// When we play this wonderful game.
     Game,
 }
+
+/// The current scene of the game.
+pub type CurrentScene = Scene;
 
 /// A player in the game.
 #[derive(Serialize, Deserialize, Clone, Debug, Component, Resource, PartialEq, Eq, Hash)]
