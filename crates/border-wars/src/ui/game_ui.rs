@@ -4,6 +4,7 @@ use bevy::prelude::*;
 
 use crate::CurrentScene;
 
+/// The plugin that sets up the UI for the game.
 pub struct GameUiPlugin;
 
 impl Plugin for GameUiPlugin {
