@@ -7,7 +7,7 @@ use bevy_egui::{egui, EguiContexts};
 use crate::networking::connection::RequestJoin;
 use crate::networking::PlayerRank;
 use crate::ui::hover::HoveredTexture;
-use crate::{CurrentScene, Player};
+use crate::{CurrentScene, Player, Scene};
 
 /// The plugin for the menu.
 pub struct MenuPlugin;
@@ -85,7 +85,7 @@ fn menu_ui(
 #[derive(Component)]
 struct MenuEntity;
 
-type TargetScene = CurrentScene;
+type TargetScene = crate::Scene;
 
 fn menu_ui2(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
@@ -126,7 +126,7 @@ fn menu_ui2(mut commands: Commands, asset_server: Res<AssetServer>) {
             top: Val::Px(25.),
             bottom: Val::Auto,
         },
-        CurrentScene::Lobby,
+        TargetScene::Lobby,
         &mut commands,
         HoveredTexture {
             texture: asset_server.load("menu/info.png"),
@@ -161,10 +161,9 @@ fn renderer(commands: &mut ChildBuilder, asset_server: &Res<AssetServer>) {
     render(
         commands,
         (UiImage {
-                texture: asset_server.load("menu/border_wars.png"),
-                ..default()
-            },
-        ),
+            texture: asset_server.load("menu/border_wars.png"),
+            ..default()
+        },),
         Val::Px(78.),
         Val::Px(614.),
         Val::Px(25.),
@@ -174,10 +173,9 @@ fn renderer(commands: &mut ChildBuilder, asset_server: &Res<AssetServer>) {
     render(
         commands,
         (UiImage {
-                texture: asset_server.load("menu/host_icon.png"),
-                ..default()
-            },
-        ),
+            texture: asset_server.load("menu/host_icon.png"),
+            ..default()
+        },),
         Val::Px(42.),
         Val::Px(53.),
         Val::Px(223.),
@@ -187,10 +185,9 @@ fn renderer(commands: &mut ChildBuilder, asset_server: &Res<AssetServer>) {
     render(
         commands,
         (UiImage {
-                texture: asset_server.load("menu/host.png"),
-                ..default()
-            },
-        ),
+            texture: asset_server.load("menu/host.png"),
+            ..default()
+        },),
         Val::Px(38.),
         Val::Px(105.),
         Val::Px(229.),
@@ -200,10 +197,9 @@ fn renderer(commands: &mut ChildBuilder, asset_server: &Res<AssetServer>) {
     render(
         commands,
         (UiImage {
-                texture: asset_server.load("menu/trait.png"),
-                ..default()
-            },
-        ),
+            texture: asset_server.load("menu/trait.png"),
+            ..default()
+        },),
         Val::Px(7.),
         Val::Px(427.),
         Val::Px(279.),
@@ -213,10 +209,9 @@ fn renderer(commands: &mut ChildBuilder, asset_server: &Res<AssetServer>) {
     render(
         commands,
         (UiImage {
-                texture: asset_server.load("menu/button.png"),
-                ..default()
-            },
-        ),
+            texture: asset_server.load("menu/button.png"),
+            ..default()
+        },),
         Val::Px(34.),
         Val::Px(253.),
         Val::Px(299.),
@@ -226,10 +221,9 @@ fn renderer(commands: &mut ChildBuilder, asset_server: &Res<AssetServer>) {
     render(
         commands,
         (UiImage {
-                texture: asset_server.load("menu/join_icon.png"),
-                ..default()
-            },
-        ),
+            texture: asset_server.load("menu/join_icon.png"),
+            ..default()
+        },),
         Val::Px(41.),
         Val::Px(63.),
         Val::Px(393.),
@@ -239,10 +233,9 @@ fn renderer(commands: &mut ChildBuilder, asset_server: &Res<AssetServer>) {
     render(
         commands,
         (UiImage {
-                texture: asset_server.load("menu/join.png"),
-                ..default()
-            },
-        ),
+            texture: asset_server.load("menu/join.png"),
+            ..default()
+        },),
         Val::Px(38.),
         Val::Px(101.),
         Val::Px(392.),
@@ -252,10 +245,9 @@ fn renderer(commands: &mut ChildBuilder, asset_server: &Res<AssetServer>) {
     render(
         commands,
         (UiImage {
-                texture: asset_server.load("menu/trait.png"),
-                ..default()
-            },
-        ),
+            texture: asset_server.load("menu/trait.png"),
+            ..default()
+        },),
         Val::Px(7.),
         Val::Px(427.),
         Val::Px(443.),
@@ -265,10 +257,9 @@ fn renderer(commands: &mut ChildBuilder, asset_server: &Res<AssetServer>) {
     render(
         commands,
         (UiImage {
-                texture: asset_server.load("menu/button.png"),
-                ..default()
-            },
-        ),
+            texture: asset_server.load("menu/button.png"),
+            ..default()
+        },),
         Val::Px(34.),
         Val::Px(253.),
         Val::Px(463.),
@@ -278,16 +269,14 @@ fn renderer(commands: &mut ChildBuilder, asset_server: &Res<AssetServer>) {
     render(
         commands,
         (UiImage {
-                texture: asset_server.load("menu/airplane.png"),
-                ..default()
-            },
-        ),
+            texture: asset_server.load("menu/airplane.png"),
+            ..default()
+        },),
         Val::Px(30.),
         Val::Px(35.),
         Val::Px(465.),
         Val::Px(777.),
     );
-
 }
 
 fn render<T: Bundle>(
