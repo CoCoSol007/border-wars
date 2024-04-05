@@ -36,4 +36,7 @@ pub struct Player {
 
     /// The uuid of the player.
     pub uuid: Uuid,
+
+    /// The color of the player.
+    pub color: (u8, u8, u8),
 }

@@ -60,6 +60,7 @@ fn menu_ui(
                         name: name.clone(),
                         rank: PlayerRank::Player,
                         uuid,
+                        color: rand::random::<(u8, u8, u8)>(),
                     }),
                 ));
             }
@@ -73,6 +74,7 @@ fn menu_ui(
                 name: name.clone(),
                 rank: PlayerRank::Admin,
                 uuid,
+                color: rand::random::<(u8, u8, u8)>(),
             });
         }
     });
