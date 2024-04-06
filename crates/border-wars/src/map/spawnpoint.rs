@@ -40,22 +40,24 @@ fn init_spawn_point(
 
         let mut sorted_players = sorted_players.iter();
 
+        // Calculate the distance between the players. It must be an integer because
+        // this is how the map is generated.
         let interval = radius as usize * 3 / sorted_players.len();
 
         for (i, position) in TilePosition::new(0, 0)
             .ring(radius as usize / 2)
             .enumerate()
         {
+            // Check the interval between players.
+            if i % interval != 0 {
+                continue;
+            }
+
             // Find the target tile.
             let Some((entity, _, mut tile)) = map.iter_mut().find(|(_, p, _)| **p == position)
             else {
                 continue;
             };
-
-            // Check the interval between players.
-            if i % interval != 0 {
-                continue;
-            }
 
             // Get the current player.
             let Some(player) = sorted_players.next() else {
