@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 pub mod camera;
 pub mod map;
 pub mod networking;
+pub mod resources;
 pub mod scenes;
 pub mod ui;
 
