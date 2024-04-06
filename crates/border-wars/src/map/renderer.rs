@@ -21,7 +21,7 @@ impl Plugin for RendererPlugin {
 
 /// The gap between the center of the tiles in the map.
 #[derive(Resource)]
-struct TilesGap(Vec2);
+pub struct TilesGap(pub Vec2);
 
 /// The size of the tiles in the map.
 #[derive(Resource, Clone, Copy)]
@@ -85,7 +85,7 @@ fn render_map(
 
         commands.entity(entity).insert(SpriteBundle {
             sprite: Sprite {
-                anchor: Anchor::BottomLeft,
+                anchor: Anchor::BottomCenter,
                 ..default()
             },
             texture,

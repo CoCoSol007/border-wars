@@ -5,6 +5,9 @@ Border Wars is a turn-based online strategy game where players compete to conque
 
 If you want to know more about our reflexions check this : [all brainstorms](docs/brainstorms/).
 
+## Game Design Prototype
+
+![game design prototype](docs/proto-border-wars1.png)
 
 ## 1. Soldier System
 

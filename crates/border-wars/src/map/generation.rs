@@ -2,6 +2,7 @@
 
 use bevy::prelude::*;
 use noise::{NoiseFn, Perlin};
+use serde::{Deserialize, Serialize};
 
 use super::hex::*;
 use super::{Tile, TilePosition};
@@ -25,7 +26,7 @@ impl Plugin for MapGenerationPlugin {
 }
 
 /// An event to trigger the generation of the map.
-#[derive(Event)]
+#[derive(Event, Serialize, Deserialize, Clone, Copy)]
 pub struct StartMapGeneration {
     /// The seed used to generate the map.
     pub seed: u32,
