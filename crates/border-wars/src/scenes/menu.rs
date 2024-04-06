@@ -19,66 +19,72 @@ impl Plugin for MenuPlugin {
     }
 }
 
-/// Display the UI of the menu to host a game or join one.
-// fn old_menu(
-//     mut ctx: EguiContexts,
-//     mut connection_string: Local<String>,
-//     mut next_scene: ResMut<NextState<CurrentScene>>,
-//     mut request_join: EventWriter<SendTo<RequestJoin>>,
-//     mut name: Local<String>,
-//     connection: Res<Connection>,
-//     mut commands: Commands,
-// ) {
-//     let Some(uuid) = connection.identifier() else {
-//         return;
-//     };
+#[derive(Component)]
+struct Host;
 
-//     egui::CentralPanel::default().show(ctx.ctx_mut(), |ui| {
-//         ui.heading("Border Wars");
+#[derive(Component)]
+struct Join;
 
-//         ui.separator();
+// Display the UI of the menu to host a game or join one.
+fn old_menu(
+    mut ctx: EguiContexts,
+    mut connection_string: Local<String>,
+    mut next_scene: ResMut<NextState<CurrentScene>>,
+    mut request_join: EventWriter<SendTo<RequestJoin>>,
+    mut name: Local<String>,
+    connection: Res<Connection>,
+    mut commands: Commands,
+) {
+    let Some(uuid) = connection.identifier() else {
+        return;
+    };
 
-//         ui.label("Name");
-//         ui.text_edit_singleline(&mut *name);
+    egui::CentralPanel::default().show(ctx.ctx_mut(), |ui| {
+        ui.heading("Border Wars");
 
-//         ui.separator();
+        ui.separator();
 
-//         ui.label("Connect to an existing game:");
-//         ui.horizontal(|ui| {
-//             ui.label("Game ID: ");
-//             ui.text_edit_singleline(&mut *connection_string);
+        ui.label("Name");
+        ui.text_edit_singleline(&mut *name);
 
-//             let Ok(game_id) = Uuid::parse_str(&connection_string) else {
-//                 return;
-//             };
+        ui.separator();
 
-//             if ui.button("Join").clicked() {
-//                 next_scene.set(CurrentScene::Lobby);
-//                 request_join.send(SendTo(
-//                     game_id,
-//                     RequestJoin(Player {
-//                         name: name.clone(),
-//                         rank: PlayerRank::Player,
-//                         uuid,
-//                         color: rand::random::<(u8, u8, u8)>(),
-//                     }),
-//                 ));
-//             }
-//         });
+        ui.label("Connect to an existing game:");
+        ui.horizontal(|ui| {
+            ui.label("Game ID: ");
+            ui.text_edit_singleline(&mut *connection_string);
 
-//         ui.separator();
+            let Ok(game_id) = Uuid::parse_str(&connection_string) else {
+                return;
+            };
 
-//         if ui.button("Create new game").clicked() {
-//             next_scene.set(CurrentScene::Lobby);
-//             commands.spawn(Player {
-//                 name: name.clone(),
-//                 rank: PlayerRank::Admin,
-//                 uuid,
-//                 color: rand::random::<(u8, u8, u8)>(),
-//             });
-//         }
-//     });
-// }
+            if ui.button("Join").clicked() {
+                next_scene.set(CurrentScene::Lobby);
+                request_join.send(SendTo(
+                    game_id,
+                    RequestJoin(Player {
+                        name: name.clone(),
+                        rank: PlayerRank::Player,
+                        uuid,
+                        color: rand::random::<(u8, u8, u8)>(),
+                    }),
+                ));
+            }
+        });
+
+        ui.separator();
+
+        if ui.button("Create new game").clicked() {
+            next_scene.set(CurrentScene::Lobby);
+            commands.spawn(Player {
+                name: name.clone(),
+                rank: PlayerRank::Admin,
+                uuid,
+                color: rand::random::<(u8, u8, u8)>(),
+            });
+        }
+    });
+}
 
 /// A Component to identify menus entities.
 /// In order to be able to remove them later.
@@ -88,12 +94,13 @@ struct MenuEntity;
 type TargetScene = crate::Scene;
 
 fn menu_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
+    // Create the background.
     commands
         .spawn(ImageBundle {
             style: Style {
                 margin: UiRect::all(Val::Auto),
-                width: Val::Px(1280.),
-                height: Val::Px(720.),
+                width: px(1280.),
+                height: px(720.),
                 flex_direction: FlexDirection::Column,
                 ..default()
             },
@@ -104,11 +111,12 @@ fn menu_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
         .insert(MenuEntity)
         .with_children(|child: &mut ChildBuilder| creation_menu_ui(child, &asset_server));
 
+    // Create the settings button.
     create_side_button(
         UiRect {
-            left: Val::Px(25.),
+            left: px(25.),
             right: Val::Auto,
-            top: Val::Px(25.),
+            top: px(25.),
             bottom: Val::Auto,
         },
         TargetScene::Lobby,
@@ -119,11 +127,12 @@ fn menu_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
         },
     );
 
+    // Create the info button.
     create_side_button(
         UiRect {
             left: Val::Auto,
-            right: Val::Px(25.),
-            top: Val::Px(25.),
+            right: px(25.),
+            top: px(25.),
             bottom: Val::Auto,
         },
         TargetScene::Lobby,
@@ -145,7 +154,7 @@ fn create_side_button(
     commands
         .spawn(ButtonBundle {
             style: Style {
-                width: Val::Px(53.),
+                width: px(53.),
                 aspect_ratio: Some(1.),
                 margin,
                 ..default()
@@ -157,147 +166,153 @@ fn create_side_button(
         .insert((target_scene, textures, MenuEntity));
 }
 
+/// That function create all elements of the menu.
 fn creation_menu_ui(commands: &mut ChildBuilder, asset_server: &Res<AssetServer>) {
+    // Create the title.
     create_object(
         commands,
         (UiImage {
             texture: asset_server.load("menu/border_wars.png"),
             ..default()
         },),
-        Val::Px(78.),
-        Val::Px(614.),
-        Val::Px(25.),
-        Val::Px(333.),
+        (px(614.), px(78.)),
+        (px(333.), px(25.)),
     );
 
+    // Create the host icon.
     create_object(
         commands,
         (UiImage {
             texture: asset_server.load("menu/host_icon.png"),
             ..default()
         },),
-        Val::Px(42.),
-        Val::Px(53.),
-        Val::Px(223.),
-        Val::Px(356.),
+        (px(53.), px(42.)),
+        (px(356.), px(223.)),
     );
 
+    // Create the host title.
     create_object(
         commands,
         (UiImage {
             texture: asset_server.load("menu/host.png"),
             ..default()
         },),
-        Val::Px(38.),
-        Val::Px(105.),
-        Val::Px(229.),
-        Val::Px(429.),
+        (px(105.), px(38.)),
+        (px(429.), px(229.)),
     );
 
+    // Create the host line.
     create_object(
         commands,
         (UiImage {
-            texture: asset_server.load("menu/trait.png"),
+            texture: asset_server.load("menu/line.png"),
             ..default()
         },),
-        Val::Px(7.),
-        Val::Px(427.),
-        Val::Px(279.),
-        Val::Px(426.),
+        (px(427.), px(7.)),
+        (px(426.), px(279.)),
     );
 
+    // Create the host button.
     create_object(
         commands,
-        (UiImage {
-            texture: asset_server.load("menu/button.png"),
-            ..default()
-        },),
-        Val::Px(34.),
-        Val::Px(253.),
-        Val::Px(299.),
-        Val::Px(513.),
+        (
+            UiImage {
+                texture: asset_server.load("menu/button.png"),
+                ..default()
+            },
+            Button,
+            Host,
+        ),
+        (px(253.), px(34.)),
+        (px(513.), px(299.)),
     );
 
+    // Create the join icon.
     create_object(
         commands,
         (UiImage {
             texture: asset_server.load("menu/join_icon.png"),
             ..default()
         },),
-        Val::Px(41.),
-        Val::Px(63.),
-        Val::Px(393.),
-        Val::Px(353.),
+        (px(63.), px(41.)),
+        (px(353.), px(393.)),
     );
 
+    // Create the join title.
     create_object(
         commands,
         (UiImage {
             texture: asset_server.load("menu/join.png"),
             ..default()
         },),
-        Val::Px(38.),
-        Val::Px(101.),
-        Val::Px(392.),
-        Val::Px(428.),
+        (px(101.), px(38.)),
+        (px(428.), px(392.)),
     );
 
+    // Create the join line.
     create_object(
         commands,
         (UiImage {
-            texture: asset_server.load("menu/trait.png"),
+            texture: asset_server.load("menu/line.png"),
             ..default()
         },),
-        Val::Px(7.),
-        Val::Px(427.),
-        Val::Px(443.),
-        Val::Px(426.),
+        (px(427.), px(7.)),
+        (px(426.), px(443.)),
     );
 
+    // Create the join button.
     create_object(
         commands,
-        (UiImage {
-            texture: asset_server.load("menu/button.png"),
-            ..default()
-        },),
-        Val::Px(34.),
-        Val::Px(253.),
-        Val::Px(463.),
-        Val::Px(513.),
+        (
+            UiImage {
+                texture: asset_server.load("menu/button.png"),
+                ..default()
+            },
+            Button,
+            Join,
+        ),
+        (px(253.), px(34.)),
+        (px(513.), px(463.)),
     );
 
+    // Create the airplane.
     create_object(
         commands,
-        (UiImage {
-            texture: asset_server.load("menu/airplane.png"),
-            ..default()
-        },),
-        Val::Px(30.),
-        Val::Px(35.),
-        Val::Px(465.),
-        Val::Px(777.),
+        (
+            UiImage {
+                texture: asset_server.load("menu/airplane.png"),
+                ..default()
+            },
+            Button,
+        ),
+        (px(35.), px(30.)),
+        (px(777.), px(465.)),
     );
 }
 
+/// A function that create objets with the given parameters.
 fn create_object<T: Bundle>(
     background: &mut ChildBuilder,
-    textures: T,
-    height: Val,
-    width: Val,
-    top: Val,
-    left: Val,
+    bundle: T,
+    size: (Val, Val),
+    pos: (Val, Val),
 ) {
     background
         .spawn(ImageBundle {
             style: Style {
-                height,
-                width,
-                top,
-                left,
+                width: size.0,
+                height: size.1,
+                left: pos.0,
+                top: pos.1,
                 position_type: PositionType::Absolute,
                 ..default()
             },
             ..default()
         })
-        .insert(textures);
+        .insert(bundle);
+}
+
+/// Translate a f32 into a `Val::Px'.
+fn px(value: f32) -> Val {
+    Val::Px(value)
 }
