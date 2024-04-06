@@ -75,7 +75,7 @@ fn init_resources_for_camera(mut commands: Commands) {
         left: KeyCode::Q,
     });
 
-    commands.insert_resource(CameraSpeedMouvement(10.0));
+    commands.insert_resource(CameraSpeedMouvement(400.0));
     commands.insert_resource(CameraSpeedScale(0.1));
     commands.insert_resource(MinimumScale(0.1));
     commands.insert_resource(MaximumScale(10.0));
@@ -87,20 +87,23 @@ fn keyboard_movement_system(
     keys: Res<Input<KeyCode>>,
     keys_settings: Res<KeysMovementSettings>,
     movement_speed: Res<CameraSpeedMouvement>,
+    delta_time: Res<Time>,
 ) {
     for mut transform in query.iter_mut() {
-        let mut target = Vec3::ZERO;
+        let mut dx = 0.0;
+        let mut dy = 0.0;
         for key in keys.get_pressed() {
             match *key {
-                value if value == keys_settings.up => target.y += movement_speed.0,
-                value if value == keys_settings.down => target.y -= movement_speed.0,
-                value if value == keys_settings.right => target.x += movement_speed.0,
-                value if value == keys_settings.left => target.x -= movement_speed.0,
+                up if up == keys_settings.up => dy += movement_speed.0,
+                down if down == keys_settings.down => dy -= movement_speed.0,
+                right if right == keys_settings.right => dx += movement_speed.0,
+                left if left == keys_settings.left => dx -= movement_speed.0,
                 _ => continue,
             }
         }
 
-        transform.translation += target;
+        transform.translation.x += dx * delta_time.delta_seconds();
+        transform.translation.y += dy * delta_time.delta_seconds();
     }
 }
 
