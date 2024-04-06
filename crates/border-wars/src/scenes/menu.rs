@@ -7,7 +7,7 @@ use bevy_egui::{egui, EguiContexts};
 use crate::networking::connection::RequestJoin;
 use crate::networking::PlayerRank;
 use crate::ui::hover::HoveredTexture;
-use crate::{CurrentScene, Player, Scene};
+use crate::{CurrentScene, Player};
 
 /// The plugin for the menu.
 pub struct MenuPlugin;
@@ -15,70 +15,70 @@ pub struct MenuPlugin;
 impl Plugin for MenuPlugin {
     fn build(&self, app: &mut App) {
         // app.add_systems(Update, menu_ui.run_if(in_state(CurrentScene::Menu)));
-        app.add_systems(OnEnter(CurrentScene::Menu), menu_ui2);
+        app.add_systems(OnEnter(CurrentScene::Menu), menu_ui);
     }
 }
 
 /// Display the UI of the menu to host a game or join one.
-fn menu_ui(
-    mut ctx: EguiContexts,
-    mut connection_string: Local<String>,
-    mut next_scene: ResMut<NextState<CurrentScene>>,
-    mut request_join: EventWriter<SendTo<RequestJoin>>,
-    mut name: Local<String>,
-    connection: Res<Connection>,
-    mut commands: Commands,
-) {
-    let Some(uuid) = connection.identifier() else {
-        return;
-    };
+// fn old_menu(
+//     mut ctx: EguiContexts,
+//     mut connection_string: Local<String>,
+//     mut next_scene: ResMut<NextState<CurrentScene>>,
+//     mut request_join: EventWriter<SendTo<RequestJoin>>,
+//     mut name: Local<String>,
+//     connection: Res<Connection>,
+//     mut commands: Commands,
+// ) {
+//     let Some(uuid) = connection.identifier() else {
+//         return;
+//     };
 
-    egui::CentralPanel::default().show(ctx.ctx_mut(), |ui| {
-        ui.heading("Border Wars");
+//     egui::CentralPanel::default().show(ctx.ctx_mut(), |ui| {
+//         ui.heading("Border Wars");
 
-        ui.separator();
+//         ui.separator();
 
-        ui.label("Name");
-        ui.text_edit_singleline(&mut *name);
+//         ui.label("Name");
+//         ui.text_edit_singleline(&mut *name);
 
-        ui.separator();
+//         ui.separator();
 
-        ui.label("Connect to an existing game:");
-        ui.horizontal(|ui| {
-            ui.label("Game ID: ");
-            ui.text_edit_singleline(&mut *connection_string);
+//         ui.label("Connect to an existing game:");
+//         ui.horizontal(|ui| {
+//             ui.label("Game ID: ");
+//             ui.text_edit_singleline(&mut *connection_string);
 
-            let Ok(game_id) = Uuid::parse_str(&connection_string) else {
-                return;
-            };
+//             let Ok(game_id) = Uuid::parse_str(&connection_string) else {
+//                 return;
+//             };
 
-            if ui.button("Join").clicked() {
-                next_scene.set(CurrentScene::Lobby);
-                request_join.send(SendTo(
-                    game_id,
-                    RequestJoin(Player {
-                        name: name.clone(),
-                        rank: PlayerRank::Player,
-                        uuid,
-                        color: rand::random::<(u8, u8, u8)>(),
-                    }),
-                ));
-            }
-        });
+//             if ui.button("Join").clicked() {
+//                 next_scene.set(CurrentScene::Lobby);
+//                 request_join.send(SendTo(
+//                     game_id,
+//                     RequestJoin(Player {
+//                         name: name.clone(),
+//                         rank: PlayerRank::Player,
+//                         uuid,
+//                         color: rand::random::<(u8, u8, u8)>(),
+//                     }),
+//                 ));
+//             }
+//         });
 
-        ui.separator();
+//         ui.separator();
 
-        if ui.button("Create new game").clicked() {
-            next_scene.set(CurrentScene::Lobby);
-            commands.spawn(Player {
-                name: name.clone(),
-                rank: PlayerRank::Admin,
-                uuid,
-                color: rand::random::<(u8, u8, u8)>(),
-            });
-        }
-    });
-}
+//         if ui.button("Create new game").clicked() {
+//             next_scene.set(CurrentScene::Lobby);
+//             commands.spawn(Player {
+//                 name: name.clone(),
+//                 rank: PlayerRank::Admin,
+//                 uuid,
+//                 color: rand::random::<(u8, u8, u8)>(),
+//             });
+//         }
+//     });
+// }
 
 /// A Component to identify menus entities.
 /// In order to be able to remove them later.
@@ -87,7 +87,7 @@ struct MenuEntity;
 
 type TargetScene = crate::Scene;
 
-fn menu_ui2(mut commands: Commands, asset_server: Res<AssetServer>) {
+fn menu_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
         .spawn(ImageBundle {
             style: Style {
@@ -102,7 +102,7 @@ fn menu_ui2(mut commands: Commands, asset_server: Res<AssetServer>) {
             ..default()
         })
         .insert(MenuEntity)
-        .with_children(|child: &mut ChildBuilder| renderer(child, &asset_server));
+        .with_children(|child: &mut ChildBuilder| creation_menu_ui(child, &asset_server));
 
     create_side_button(
         UiRect {
@@ -157,8 +157,8 @@ fn create_side_button(
         .insert((target_scene, textures, MenuEntity));
 }
 
-fn renderer(commands: &mut ChildBuilder, asset_server: &Res<AssetServer>) {
-    render(
+fn creation_menu_ui(commands: &mut ChildBuilder, asset_server: &Res<AssetServer>) {
+    create_object(
         commands,
         (UiImage {
             texture: asset_server.load("menu/border_wars.png"),
@@ -170,7 +170,7 @@ fn renderer(commands: &mut ChildBuilder, asset_server: &Res<AssetServer>) {
         Val::Px(333.),
     );
 
-    render(
+    create_object(
         commands,
         (UiImage {
             texture: asset_server.load("menu/host_icon.png"),
@@ -182,7 +182,7 @@ fn renderer(commands: &mut ChildBuilder, asset_server: &Res<AssetServer>) {
         Val::Px(356.),
     );
 
-    render(
+    create_object(
         commands,
         (UiImage {
             texture: asset_server.load("menu/host.png"),
@@ -194,7 +194,7 @@ fn renderer(commands: &mut ChildBuilder, asset_server: &Res<AssetServer>) {
         Val::Px(429.),
     );
 
-    render(
+    create_object(
         commands,
         (UiImage {
             texture: asset_server.load("menu/trait.png"),
@@ -206,7 +206,7 @@ fn renderer(commands: &mut ChildBuilder, asset_server: &Res<AssetServer>) {
         Val::Px(426.),
     );
 
-    render(
+    create_object(
         commands,
         (UiImage {
             texture: asset_server.load("menu/button.png"),
@@ -218,7 +218,7 @@ fn renderer(commands: &mut ChildBuilder, asset_server: &Res<AssetServer>) {
         Val::Px(513.),
     );
 
-    render(
+    create_object(
         commands,
         (UiImage {
             texture: asset_server.load("menu/join_icon.png"),
@@ -230,7 +230,7 @@ fn renderer(commands: &mut ChildBuilder, asset_server: &Res<AssetServer>) {
         Val::Px(353.),
     );
 
-    render(
+    create_object(
         commands,
         (UiImage {
             texture: asset_server.load("menu/join.png"),
@@ -242,7 +242,7 @@ fn renderer(commands: &mut ChildBuilder, asset_server: &Res<AssetServer>) {
         Val::Px(428.),
     );
 
-    render(
+    create_object(
         commands,
         (UiImage {
             texture: asset_server.load("menu/trait.png"),
@@ -254,7 +254,7 @@ fn renderer(commands: &mut ChildBuilder, asset_server: &Res<AssetServer>) {
         Val::Px(426.),
     );
 
-    render(
+    create_object(
         commands,
         (UiImage {
             texture: asset_server.load("menu/button.png"),
@@ -266,7 +266,7 @@ fn renderer(commands: &mut ChildBuilder, asset_server: &Res<AssetServer>) {
         Val::Px(513.),
     );
 
-    render(
+    create_object(
         commands,
         (UiImage {
             texture: asset_server.load("menu/airplane.png"),
@@ -279,7 +279,7 @@ fn renderer(commands: &mut ChildBuilder, asset_server: &Res<AssetServer>) {
     );
 }
 
-fn render<T: Bundle>(
+fn create_object<T: Bundle>(
     background: &mut ChildBuilder,
     textures: T,
     height: Val,
