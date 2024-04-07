@@ -7,6 +7,7 @@ pub mod renderer;
 pub mod selected_tile;
 
 use bevy::prelude::*;
+use serde::{Deserialize, Serialize};
 
 use self::hex::*;
 
@@ -14,7 +15,7 @@ use self::hex::*;
 pub type TilePosition = HexPosition<i32>;
 
 /// The tile of the map.
-#[derive(Component, Debug)]
+#[derive(Component, Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Tile {
     /// The breeding tile.
     Breeding,

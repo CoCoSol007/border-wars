@@ -6,6 +6,7 @@ use std::ops::{
 
 use bevy::prelude::*;
 use paste::paste;
+use serde::{Deserialize, Serialize};
 
 /// Represents a number that can be used in calculations for hexagonal grids.
 pub trait Number:
@@ -99,7 +100,7 @@ number_impl! {
 /// Represents a position in a hexagonal grid.
 /// We use the axial coordinate system explained in this
 /// [documentation](https://www.redblobgames.com/grids/hexagons/#coordinates).
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, Component)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, Component, Serialize, Deserialize)]
 pub struct HexPosition<T: Number>(pub T, pub T);
 
 /// All possible directions in a hexagonal grid.

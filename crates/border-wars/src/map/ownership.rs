@@ -1,11 +1,12 @@
 //! All code related to the ownership of the tiles.
 
 use bevy::prelude::*;
+use serde::{Deserialize, Serialize};
 
 use crate::Player;
 
 /// The owner of a tile.
-#[derive(Component, Clone)]
+#[derive(Component, Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct Owner(pub Player);
 
 /// The plugin to render the ownership of the tiles.

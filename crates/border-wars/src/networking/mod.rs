@@ -11,6 +11,7 @@ use crate::CurrentScene;
 
 pub mod check_connection;
 pub mod connection;
+pub mod reconnection;
 
 /// The plugin for the networking.
 pub struct NetworkingPlugin;
