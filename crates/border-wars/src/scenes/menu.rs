@@ -6,6 +6,7 @@ use bevy_egui::{egui, EguiContexts};
 
 use crate::networking::connection::RequestJoin;
 use crate::networking::PlayerRank;
+use crate::resources::Resources;
 use crate::{CurrentScene, Player};
 
 /// The plugin for the menu.
@@ -59,6 +60,7 @@ fn menu_ui(
                         rank: PlayerRank::Player,
                         uuid,
                         color: rand::random::<(u8, u8, u8)>(),
+                        resources: Resources::initial(),
                     }),
                 ));
             }
@@ -73,6 +75,7 @@ fn menu_ui(
                 rank: PlayerRank::Admin,
                 uuid,
                 color: rand::random::<(u8, u8, u8)>(),
+                resources: Resources::initial(),
             });
         }
     });

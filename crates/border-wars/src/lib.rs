@@ -43,4 +43,7 @@ pub struct Player {
 
     /// The color of the player.
     pub color: (u8, u8, u8),
+
+    /// The resources of the player.
+    pub resources: resources::Resources,
 }
