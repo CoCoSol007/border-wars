@@ -1,0 +1,23 @@
+[package]
+name = "relay-raft"
+version = "0.2.0"
+edition = "2021"
+license = "GPL-3.0-or-later"
+description = "Raft implementation for the relay client."
+authors = [
+    "Tipragot <contact@tipragot.fr>",
+    "CoCoSol <solois.corentin@proton.me>",
+]
+keywords = ["bevy", "network", "game", "raft"]
+categories = ["network-programming", "game-development"]
+
+# [lints]
+# workspace = true
+
+[dependencies]
+relay-client = { path = "../relay-client" }
+simple-raft = "0.2.0"
+prost = { version = "0.7.0" }
+rand_chacha = "0.3.1"
+rand_core = "0.6.4"
+uuid = "1.8.0"
