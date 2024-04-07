@@ -1,6 +1,6 @@
 //! All program related to the resources of the game.
 
-use bevnet::{Receive, SendTo};
+use bevnet::{NetworkAppExt, Receive, SendTo};
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
@@ -13,6 +13,7 @@ impl Plugin for ResourcesPlugin {
     fn build(&self, app: &mut App) {
         app.add_event::<ResetResources>()
             .insert_resource(Resources::initial())
+            .add_network_event::<UpdateResources>()
             .add_systems(
                 Update,
                 (handle_reset_resources, save_resources, update_resources),
@@ -90,5 +91,9 @@ fn update_resources(
         };
 
         player.resources = event.1.0;
+        println!(
+            "Update resources for player {:?} to {:?}",
+            player.uuid, player.resources
+        );
     }
 }
