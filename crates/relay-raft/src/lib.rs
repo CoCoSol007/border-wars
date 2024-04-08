@@ -77,7 +77,7 @@ impl RaftConnection {
         let mut data = message.into().into_owned();
         if self.node.is_leader() {
             let Ok(messages) = self.node.append(data) else {
-                panic!("Message just cancelled.");
+                return;
             };
             Self::send_raft_messages(&self.connection, &self.peers, messages);
         } else {
@@ -132,7 +132,7 @@ impl RaftConnection {
                 }
                 1 if self.node.is_leader() => {
                     let Ok(messages) = self.node.append(message) else {
-                        panic!("Message just cancelled.");
+                        continue;
                     };
                     Self::send_raft_messages(&self.connection, &self.peers, messages);
                 }
