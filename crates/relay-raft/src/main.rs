@@ -4,7 +4,7 @@ use std::time::Duration;
 use std::{io, thread};
 
 use relay_client::Connection;
-use relay_raft::RaftConnection;
+use relay_raft::{RaftConnection, RaftConnectionConfig};
 use uuid::Uuid;
 
 fn main() {
@@ -24,7 +24,15 @@ fn main() {
         .map(|s| Uuid::parse_str(s).unwrap())
         .collect();
 
-    let Ok(mut connection) = RaftConnection::from(connection, peers) else {
+    let Ok(mut connection) = RaftConnection::from(
+        connection,
+        peers,
+        RaftConnectionConfig {
+            election_timeout_ticks: 10,
+            heartbeat_interval_ticks: 1,
+            replication_chunk_size: usize::max_value(),
+        },
+    ) else {
         panic!("Failed to create raft connection");
     };
 
@@ -33,9 +41,7 @@ fn main() {
         loop {
             let mut message = String::new();
             io::stdin().read_line(&mut message).unwrap();
-            sender
-                .send(message.replace('\n', "").replace('\r', ""))
-                .unwrap();
+            sender.send(message.replace(['\n', '\r'], "")).unwrap();
         }
     });
 
