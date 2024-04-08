@@ -52,6 +52,7 @@ impl RaftConnection {
             let Ok(messages) = self.node.append(data) else {
                 panic!("OOOOOOOOH!");
             };
+            Self::send_raft_messages(&self.connection, &self.peers, messages);
         } else {
             data.push(1);
             if let (Some(leader), _) = self.node.leader() {
