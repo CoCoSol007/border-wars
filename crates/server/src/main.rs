@@ -5,7 +5,6 @@ use axum::extract::ws::{Message, WebSocket};
 use axum::extract::WebSocketUpgrade;
 use axum::routing::get;
 use axum::Router;
-use dashmap::DashMap;
 use futures::{SinkExt, StreamExt};
 use lazy_static::lazy_static;
 use log::warn;
@@ -117,6 +116,8 @@ async fn handle_unauthenticated(client_id: Uuid, packet: ClientPacket) {
                     },
                 )]),
             };
+            let message = bincode::serialize(&ServerPacket::LobbyUpdated(lobby.clone()))
+                .expect("failed to serialize lobby");
             let mut lobbies = LOBBIES.write().await;
             lobbies.insert(lobby_id, lobby);
             CLIENTS
@@ -126,6 +127,7 @@ async fn handle_unauthenticated(client_id: Uuid, packet: ClientPacket) {
                 .expect("client not found")
                 .status = ClientStatus::InLobby(lobby_id);
             send_packet(client_id, ServerPacket::LobbyJoined(lobby_id)).await;
+            send_message(client_id, message).await;
         }
         ClientPacket::JoinLobby { lobby_id, username } => {
             let mut lobbies = LOBBIES.write().await;
@@ -178,7 +180,8 @@ async fn handle_unauthenticated(client_id: Uuid, packet: ClientPacket) {
                 .status = ClientStatus::InLobby(lobby_id);
             send_packet(client_id, ServerPacket::LobbyJoined(lobby_id)).await;
 
-            let message = bincode::serialize(&lobby).expect("failed to serialize lobby");
+            let message = bincode::serialize(&ServerPacket::LobbyUpdated(lobby.clone()))
+                .expect("failed to serialize lobby"); // PAS BON
             for player_id in lobby.players.keys() {
                 send_message(*player_id, &message).await;
             }

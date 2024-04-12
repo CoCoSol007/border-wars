@@ -25,13 +25,13 @@ pub enum ServerPacket {
     LobbyUpdated(Lobby),
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Lobby {
     pub public: bool,
     pub players: HashMap<Uuid, LobbyPlayer>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct LobbyPlayer {
     pub username: String,
     pub ready: bool,
