@@ -4,34 +4,35 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 #[derive(Serialize, Deserialize)]
-pub enum ClientMessage {
+pub enum ClientPacket {
+    Disconnect,
     CreateLobby {
         username: String,
         public: bool,
     },
     JoinLobby {
-        username: String,
         lobby_id: Option<Uuid>,
+        username: String,
     },
-    Ready(bool),
+    IAmReady,
+    IAmNotReady,
 }
 
 #[derive(Serialize, Deserialize)]
-pub enum ServerMessage {
+pub enum ServerPacket {
     Refused(String),
-    LobbyUpdate(Lobby),
+    LobbyJoined(Uuid),
+    LobbyUpdated(Lobby),
 }
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Lobby {
-    pub id: Uuid,
     pub public: bool,
-    pub players: HashMap<Uuid, Player>,
+    pub players: HashMap<Uuid, LobbyPlayer>,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
-pub struct Player {
-    pub id: Uuid,
+pub struct LobbyPlayer {
     pub username: String,
     pub ready: bool,
 }

@@ -7,20 +7,15 @@ description = "The server of Border Wars"
 repository = "https://git.tipragot.fr/corentin/border-wars.git"
 
 [dependencies]
-anyhow = "1.0.81"
-axum = { version = "0.7.5", features = ["ws"] }
-bincode = "1.3.3"
-dashmap = "5.5.3"
-flurry = "0.5.0"
-futures = "0.3.30"
-lazy_static = "1.4.0"
-log = "0.4.21"
-rand = "0.8.5"
-scc = "2.0.19"
+tokio = { version = "1.37.0", features = ["rt-multi-thread"] }
+uuid = { version = "1.8.0", features = ["serde", "v7"] }
 serde = { version = "1.0.197", features = ["derive"] }
-slotmap = { version = "1.0.7", features = ["serde"] }
-tokio = { version = "1.37.0", features = ["macros", "rt-multi-thread"] }
-uuid = { version = "1.8.0", features = ["v4", "serde", "v7"] }
+axum = { version = "0.7.5", features = ["ws"] }
+ascon-hash = "0.2.0"
+rand = "0.8.5"
+futures = "0.3.30"
+bincode = "1.3.3"
+lazy_static = "1.4.0"
 
 # [lints]
 # workspace = true
