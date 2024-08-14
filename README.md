@@ -1,4 +1,12 @@
 # Border Wars
+
+## 🚧 Project Status
+
+### 🛑 Project on Hold
+
+Currently, this project is on hold. We are waiting for the developers to resume work so that we can move forward with the next steps.
+
+---
 Border Wars is a turn-based online strategy game where players compete to conquer territories and expand their medieval kingdom. The game incorporates various elements outlined in all brainstorm:
 
 ## Brainstorms
