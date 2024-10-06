@@ -17,6 +17,9 @@ If you want to know more about our reflexions check this : [all brainstorms](doc
 
 ![game design prototype](docs/proto-border-wars1.png)
 
+[example.webm](https://github.com/user-attachments/assets/cc4d1652-9c2e-448a-b9c7-bb7efc15aa1e)
+
+
 ## 1. Soldier System
 
 - **Move Management**: Players can strategically move their troops across the hexagonal grid.
